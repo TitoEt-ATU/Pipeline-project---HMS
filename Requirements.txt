@@ -1,0 +1,65 @@
+
+User Interaction:
+Book Appointment
+Check in
+View Medical Records
+Pay Bills
+Manage Inventory
+Manage Staff
+Generate Reports
+Log Out
+Book Appointment:
+User selects "Book Appointment."
+System displays available doctors and time slots.
+User selects a doctor and preferred time.
+System confirms the appointment booking.
+Check in:
+Patient arrives at the hospital.
+Receptionist greets the patient and verifies their appointment.
+Receptionist checks the patient in and assigns a queue number.
+View Medical Records:
+User selects "View Medical Records."
+System prompts user to enter patient ID or name.
+System retrieves and displays the patient's medical history.
+Pay Bills:
+User selects "Pay Bills."
+System displays a list of outstanding bills for the user.
+User selects the bill(s) to pay and enters payment details.
+System processes the payment and updates the billing records.
+Manage Inventory:
+Authorized staff member selects "Manage Inventory."
+System displays options to add, update, or remove items from inventory.
+Staff member performs the desired inventory management tasks.
+System updates the inventory database accordingly.
+Manage Staff:
+Authorized administrator selects "Manage Staff."
+System displays options to add, update, or remove staff members.
+Administrator performs the desired staff management tasks.
+System updates the staff database accordingly.
+Generate Reports:
+Authorized user selects "Generate Reports."
+System provides options to generate various reports such as patient statistics, financial summaries, etc.
+User selects the type of report to generate.
+System generates the report and displays it to the user.
+4.4 Functional Requirements | SRS (Hospital Management System)
+Functional requirements for a Hospital Management System (HMS) typically include a wide range of features and capabilities to ensure efficient operations and effective patient care. Here are some common functional requirements for an HMS:
+
+Patient Management:
+Registration: Ability to register new patients, including capturing personal and medical information.
+Appointment Scheduling: Allow patients to schedule appointments with doctors or departments.
+Admission/Discharge: Manage the admission and discharge process for patients.
+Staff Management:
+User Authentication: Secure login for staff members with different access levels (admin, doctors, nurses, etc.).
+Staff Roster: Manage staff schedules, including doctors, nurses, and administrative personnel.
+Medical Records Management:
+Electronic Health Records (EHR): Store and manage patient medical history, diagnoses, treatments, and test results.
+Medical Imaging: Integration with systems for storing and viewing medical images such as X-rays, MRIs, and CT scans.
+Billing and Insurance:
+Billing: Generate bills for services rendered, including consultation fees, procedures, medications, and room charges.
+Insurance Claims: Manage insurance information and submit claims to insurance providers.
+Pharmacy Management:
+Medicine Inventory: Track medication stock levels and manage inventory.
+Prescription Management: Record prescriptions, dispense medications, and manage refill requests.
+Laboratory Management:
+Test Orders: Accept requests for laboratory tests from doctors.
+Test Results: Record and provide access to test results for medical staff.
