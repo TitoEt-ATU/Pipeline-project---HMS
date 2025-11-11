@@ -1,5 +1,4 @@
-from flask import Flask, request, render_template
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, request, render_template, redirect, url_for, flash
 from datetime import datetime
 from config.settings import Config
 from src.extensions import db, migrate
@@ -14,11 +13,11 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
 
-    @app.route('//Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/templates/home.html')
+    @app.route('/')
     def home():
         return render_template('home.html')
 
-    @app.route('/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/templates/patients.html')
+    @app.route('/patients', methods=['GET', 'POST'])
     def patients():
         page = request.args.get('page', 1, type=int)
         search = request.args.get('search', '', type=str)
@@ -30,7 +29,8 @@ def create_app():
             query = query.filter(
                 (Patient.first_name.ilike(f'%{search}%')) |
                 (Patient.last_name.ilike(f'%{search}%')) |
-                (Patient.phone.ilike(f'%{search}%'))
+                (Patient.phone.ilike(f'%{search}%')) |
+                (Patient.id.ilike(f'%{search}%'))
             )
 
         patients_paginated = query.order_by(Patient.id).paginate(page=page, per_page=10)
@@ -131,31 +131,90 @@ def create_app():
         except Exception:
             db.session.rollback()
         return redirect(url_for('patients'))
-# ----------------- Doctors -----------------
-    @app.route('/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/templates/doctors.html')
+
+    @app.route("/patients/delete/<int:id>", methods=["POST"])
+    def delete_patient(id):
+        patient = Patient.query.get_or_404(id)
+        db.session.delete(patient)
+        db.session.commit()
+        flash("Patient deleted successfully!", "info")
+        return redirect(url_for('patients'))
+        
+    @app.route('/doctors', methods=['GET', 'POST'])
     def doctors():
         page = request.args.get('page', 1, type=int)
         search = request.args.get('search', '', type=str)
 
+        # Handle form submission for add or update
+        if request.method == 'POST':
+            form = request.form
+            doctor_id = form.get('doctor_id')
+
+            # If doctor_id exists, update; else, add new
+            if doctor_id:
+                doctor = Doctor.query.get_or_404(doctor_id)
+                doctor.first_name = form.get('first_name', doctor.first_name)
+                doctor.last_name = form.get('last_name', doctor.last_name)
+                doctor.specialization = form.get('specialization', doctor.specialization)
+                doctor.phone = form.get('phone', doctor.phone)
+                doctor.email = form.get('email', doctor.email)
+                doctor.department = form.get('department', doctor.department)
+                doctor.status = form.get('status', doctor.status)
+                flash("Doctor updated successfully!", "success")
+            else:
+                doctor = Doctor(
+                    first_name=form.get('first_name', ''),
+                    last_name=form.get('last_name', ''),
+                    specialization=form.get('specialization', ''),
+                    phone=form.get('phone'),
+                    email=form.get('email'),
+                    department=form.get('department'),
+                    status=form.get('status', 'Active')
+                )
+                db.session.add(doctor)
+                flash("Doctor added successfully!", "success")
+
+            try:
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                flash("Error saving doctor data.", "danger")
+
+            return redirect(url_for('doctors'))
+
+        # GET request: show doctors list
         query = Doctor.query
         if search:
             query = query.filter(
-                (Doctor.name.ilike(f'%{search}%')) |
-                (Doctor.specialty.ilike(f'%{search}%'))
+                (Doctor.first_name.ilike(f'%{search}%')) |
+                (Doctor.last_name.ilike(f'%{search}%')) |
+                (Doctor.specialization.ilike(f'%{search}%'))
             )
 
         doctors_paginated = query.order_by(Doctor.id).paginate(page=page, per_page=10)
         return render_template('doctors.html', doctors=doctors_paginated, search=search)
 
+
+    # ----------------- Delete Doctor -----------------
+    @app.route('/doctors/delete/<int:doctor_id>', methods=['POST'])
+    def delete_doctor(doctor_id):
+        doctor = Doctor.query.get_or_404(doctor_id)
+        db.session.delete(doctor)
+        db.session.commit()
+        flash("Doctor deleted successfully!", "info")
+        return redirect(url_for('add_or_list_doctors'))
+
+
+
     # ----------------- Appointments -----------------
-    @app.route('/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/templates/appointments.html')
+    @app.route('/appointments')
     def appointments():
         page = request.args.get('page', 1, type=int)
         appointments_paginated = Appointment.query.order_by(Appointment.id).paginate(page=page, per_page=10)
         return render_template('appointments.html', appointments=appointments_paginated)
 
     # ----------------- Medical Records -----------------
-    @app.route('/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/templates/medical_records.html')
+    @app.route('/medical_records')
     def medical_records():
         page = request.args.get('page', 1, type=int)
         records_paginated = MedicalRecord.query.order_by(MedicalRecord.id).paginate(page=page, per_page=10)
