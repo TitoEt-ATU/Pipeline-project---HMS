@@ -28,10 +28,10 @@
 
 <div class="pagination">
     {% if appointments.has_prev %}
-        <a href="{{ url_for('appointments', page=appointments.prev_num) }}">« Prev</a>
+        <a href="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/templates/appointments.html">« Prev</a>
     {% endif %}
     Page {{ appointments.page }} of {{ appointments.pages }}
     {% if appointments.has_next %}
-        <a href="{{ url_for('appointments', page=appointments.next_num) }}">Next »</a>
+        <a href="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/templates/appointments.html">Next »</a>
     {% endif %}
 </div>

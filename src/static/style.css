@@ -75,3 +75,61 @@ form button {
 .pagination a:hover {
     text-decoration: underline;
 }
+
+/* New styles for patients view */
+.controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.server-search { display: inline-block; }
+
+.client-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.search-input {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 320px;
+}
+
+.toggle-label { font-size: 0.9rem; color: #333; }
+
+.details-row { display: none; background: #fffbe6; }
+.details-row td { padding: 12px; border-top: 1px solid #eee; }
+
+.details-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.details-grid .long { grid-column: 1 / -1; white-space: normal; }
+
+.details-btn { padding: 6px 8px; border-radius: 4px; border: 1px solid #4CAF50; background: white; color: #4CAF50; cursor: pointer; }
+.details-btn:hover { background: #4CAF50; color: #fff; }
+
+/* Card view for narrow screens or when toggled */
+.card-view .table-container { padding: 0; border: none; background: transparent; }
+.card-view table { border: none; width: 100%; min-width: 0; }
+.card-view thead { display: none; }
+.card-view tbody { display: flex; flex-direction: column; gap: 10px; }
+.card-view .main-row { display: block; border: 1px solid #ddd; padding: 10px; border-radius: 6px; background: #fff; }
+.card-view .main-row td { display: block; border: none; padding: 3px 0; }
+.card-view .details-row { display: block; }
+
+@media (max-width: 800px) {
+    .details-grid { grid-template-columns: 1fr; }
+    .search-input { width: 180px; }
+}
+
+/* Simple modal */
+.modal { position: fixed; left: 0; top: 0; right:0; bottom:0; background: rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; z-index:9999; }
+.modal-content { background: #fff; padding: 16px; border-radius: 8px; max-width:800px; width:100%; box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+.modal-content input, .modal-content textarea { width: 100%; box-sizing: border-box; margin-top:4px; margin-bottom:8px; }
+.actions-row { margin-top:8px; }
+.edit-btn { padding: 6px 8px; border-radius:4px; border:1px solid #1976d2; background:#fff; color:#1976d2; cursor:pointer; }
+.edit-btn:hover { background:#1976d2; color:#fff; }
+

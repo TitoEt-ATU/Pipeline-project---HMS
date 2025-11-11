@@ -1,0 +1,25 @@
+<h1>Medical Records</h1>
+
+<!-- Minimal page: show Add Patient inline so staff can create patient records from here -->
+<div class="controls">
+    <button id="addPatientBtn" class="details-btn" type="button">Add Patient</button>
+</div>
+
+<!-- Reuse the same modal form used on patients page -->
+<div id="patientModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h3 id="modalTitle">Add Patient</h3>
+        <form id="patientForm" method="post" action="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/templates/patients.html">
+            <input type="hidden" name="patient_id" id="patient_id">
+            <div><label>First name <input name="first_name" id="first_name"></label></div>
+            <div><label>Last name <input name="last_name" id="last_name"></label></div>
+            <div><label>Date of birth <input type="date" name="date_of_birth" id="date_of_birth"></label></div>
+            <div><label>Gender <input name="gender" id="gender"></label></div>
+            <div><label>Phone <input name="phone" id="phone"></label></div>
+            <div><label>Email <input name="email" id="email"></label></div>
+            <div style="margin-top:8px;"><button type="submit">Save</button> <button type="button" id="cancelPatient">Cancel</button></div>
+        </form>
+    </div>
+</div>
+
+<script src="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/static/patients.js"></script>

@@ -1,82 +1,115 @@
-<h1>Patients List</h1>
+<h1>Patients</h1>
 
-<form method="get" action="{{ url_for('list_patients') }}">
-    <input type="text" name="search" placeholder="Search by name or phone" value="{{ search }}">
-    <button type="submit">Search</button>
-</form>
+<!-- Controls: server search + client-side live search and view toggle + add patient -->
+<div class="controls">
+    <form method="get" action="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/templates/patients.html" class="server-search">
+        <input type="text" name="search" placeholder="Server search by name or phone" value="{{ search }}">
+        <button type="submit">Search</button>
+    </form>
 
-<div class="table-container">
-    <table>
+    <div class="client-controls">
+        <button id="addPatientBtn" class="details-btn" type="button">Add Patient</button>
+        <input id="liveSearch" class="search-input" type="search" placeholder="Live filter: name, phone, physician, insurance...">
+        <label class="toggle-label"><input id="cardToggle" type="checkbox"> Card view</label>
+    </div>
+</div>
+
+<div class="table-container" id="patientsContainer">
+    <table id="patientsTable">
         <thead>
             <tr>
-                <th>Patient ID</th>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>Date of Birth</th>
-                <th>Gender</th>
-                <th>Blood Type</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Address</th>
-                <th>Emergency Contact Name</th>
-                <th>Emergency Contact Phone</th>
-                <th>Insurance Provider</th>
-                <th>Insurance Number</th>
-                <th>Allergies</th>
-                <th>Drug Interactions</th>
-                <th>Past Medical History</th>
-                <th>Surgical History</th>
-                <th>Family Medical History</th>
-                <th>Social History</th>
-                <th>Immunizations</th>
-                <th>Hospital Stays</th>
-                <th>Next Appointment</th>
-                <th>Primary Physician</th>
-                <th>Incident History</th>
+                <th data-sort="number">ID</th>
+                <th data-sort="string">First Name</th>
+                <th data-sort="string">Last Name</th>
+                <th data-sort="date">DOB</th>
+                <th data-sort="string">Gender</th>
+                <th data-sort="string">Phone</th>
+                <th data-sort="string">Email</th>
+                <th data-sort="string">Primary Physician</th>
+                <th data-sort="date">Next Appointment</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for patient in patients.items %}
-            <tr>
-                <td>{{ patient.id }}</td>
-                <td>{{ patient.first_name }}</td>
-                <td>{{ patient.last_name }}</td>
-                <td>{{ patient.date_of_birth }}</td>
-                <td>{{ patient.gender }}</td>
-                <td>{{ patient.blood_type }}</td>
-                <td>{{ patient.phone }}</td>
-                <td>{{ patient.email }}</td>
-                <td>{{ patient.address }}</td>
-                <td>{{ patient.emergency_contact_name }}</td>
-                <td>{{ patient.emergency_contact_phone }}</td>
-                <td>{{ patient.insurance_provider }}</td>
-                <td>{{ patient.insurance_number }}</td>
-                <td>{{ patient.allergies }}</td>
-                <td>{{ patient.drug_interactions }}</td>
-                <td>{{ patient.past_medical_history }}</td>
-                <td>{{ patient.surgical_history }}</td>
-                <td>{{ patient.family_medical_history }}</td>
-                <td>{{ patient.social_history }}</td>
-                <td>{{ patient.immunizations }}</td>
-                <td>{{ patient.hospital_stays }}</td>
-                <td>{{ patient.next_appointment }}</td>
-                <td>{{ patient.primary_physician }}</td>
-                <td>{{ patient.incident_history }}</td>
+            <tr class="main-row">
+                <td class="col-id">{{ patient.id }}</td>
+                <td class="col-first">{{ patient.first_name }}</td>
+                <td class="col-last">{{ patient.last_name }}</td>
+                <td class="col-dob">{{ patient.date_of_birth }}</td>
+                <td class="col-gender">{{ patient.gender }}</td>
+                <td class="col-phone">{{ patient.phone }}</td>
+                <td class="col-email">{{ patient.email }}</td>
+                <td class="col-physician">{{ patient.primary_physician }}</td>
+                <td class="col-next">{{ patient.next_appointment }}</td>
+                <td class="col-actions"><button class="details-btn" type="button">Details</button></td>
+            </tr>
+            <tr class="details-row">
+                <td colspan="10">
+                    <div class="details-grid">
+                        <div><strong>Address:</strong> {{ patient.address }}</div>
+                        <div><strong>Emergency Contact:</strong> {{ patient.emergency_contact }} — {{ patient.emergency_contact_phone }}</div>
+                        <div><strong>Insurance:</strong> {{ patient.insurance_provider }} ({{ patient.insurance_number }})</div>
+                        <div><strong>Blood Type:</strong> {{ patient.blood_type }}</div>
+                        <div><strong>Allergies:</strong> {{ patient.allergies }}</div>
+                        <div><strong>Drug Interactions:</strong> {{ patient.drug_interactions }}</div>
+                        <div class="long"><strong>Past Medical History:</strong> {{ patient.past_medical_history }}</div>
+                        <div class="long"><strong>Surgical History:</strong> {{ patient.surgical_history }}</div>
+                        <div class="long"><strong>Family Medical History:</strong> {{ patient.family_medical_history }}</div>
+                        <div class="long"><strong>Social History:</strong> {{ patient.social_history }}</div>
+                        <div class="long"><strong>Immunizations:</strong> {{ patient.immunizations }}</div>
+                        <div class="long"><strong>Hospital Stays:</strong> {{ patient.hospital_stays }}</div>
+                        <div class="long"><strong>Incident History:</strong> {{ patient.incident_history }}</div>
+                        <div class="actions-row">
+                            <button class="edit-btn" type="button" data-id="{{ patient.id }}">Edit</button>
+                        </div>
+                    </div>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 
-<!-- Pagination controls -->
+<!-- Pagination controls (server-driven) -->
 <div class="pagination">
     {% if patients.has_prev %}
-        <a href="{{ url_for('list_patients', page=patients.prev_num, search=search) }}">« Prev</a>
+        <a href="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/templates/patients.html">« Prev</a>
     {% endif %}
 
     Page {{ patients.page }} of {{ patients.pages }}
 
     {% if patients.has_next %}
-        <a href="{{ url_for('list_patients', page=patients.next_num, search=search) }}">Next »</a>
+        <a href="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/templates/patients.html">Next »</a>
     {% endif %}
 </div>
+
+<!-- Modal form for add/edit patient -->
+<div id="patientModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h3 id="modalTitle">Add Patient</h3>
+        <form id="patientForm" method="post" action="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/templates/patients.html">
+            <input type="hidden" name="patient_id" id="patient_id">
+            <div><label>First name <input name="first_name" id="first_name"></label></div>
+            <div><label>Last name <input name="last_name" id="last_name"></label></div>
+            <div><label>Date of birth <input type="date" name="date_of_birth" id="date_of_birth"></label></div>
+            <div><label>Gender <input name="gender" id="gender"></label></div>
+            <div><label>Blood type <input name="blood_type" id="blood_type"></label></div>
+            <div><label>Phone <input name="phone" id="phone"></label></div>
+            <div><label>Email <input name="email" id="email"></label></div>
+            <div><label>Address <input name="address" id="address"></label></div>
+            <div><label>Emergency contact <input name="emergency_contact" id="emergency_contact"></label></div>
+            <div><label>Emergency phone <input name="emergency_contact_phone" id="emergency_contact_phone"></label></div>
+            <div><label>Insurance provider <input name="insurance_provider" id="insurance_provider"></label></div>
+            <div><label>Insurance number <input name="insurance_number" id="insurance_number"></label></div>
+            <div><label>Primary physician <input name="primary_physician" id="primary_physician"></label></div>
+            <div><label>Next appointment <input type="date" name="next_appointment" id="next_appointment"></label></div>
+            <div><label>Allergies <textarea name="allergies" id="allergies"></textarea></label></div>
+            <div><label>Past medical history <textarea name="past_medical_history" id="past_medical_history"></textarea></label></div>
+            <div style="margin-top:8px;"><button type="submit">Save</button> <button type="button" id="cancelPatient">Cancel</button></div>
+        </form>
+    </div>
+</div>
+
+<!-- Include client-side script for live filtering, sorting and modal handling -->
+<script src="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/static/patients.js"></script>
