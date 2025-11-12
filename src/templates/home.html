@@ -8,10 +8,10 @@
 <body>
     <h1>Hospital Management System</h1>
     <ul>
-        <li><a href="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/templates/patients.html">Patients</a></li>
-        <li><a href="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/templates/doctors.html">Doctors</a></li>
-        <li><a href="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/templates/appointments.html">Appointments</a></li>
-        <li><a href="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/templates/medical_records.html">Medical Records</a></li>
+        <li><a href="{{ url_for('patients') }}">Patients</a></li>
+        <li><a href="{{ url_for('doctors') }}">Doctors</a></li>
+        <li><a href="{{ url_for('appointments') }}">Appointments</a></li>
+        <li><a href="{{ url_for('medical_records') }}">Medical Records</a></li>
     </ul>
 </body>
 </html>

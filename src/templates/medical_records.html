@@ -9,7 +9,7 @@
 <div id="patientModal" class="modal" style="display:none;">
     <div class="modal-content">
         <h3 id="modalTitle">Add Patient</h3>
-        <form id="patientForm" method="post" action="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/templates/patients.html">
+        <form id="patientForm" method="post" action="{{ url_for('patients') }}">
             <input type="hidden" name="patient_id" id="patient_id">
             <div><label>First name <input name="first_name" id="first_name"></label></div>
             <div><label>Last name <input name="last_name" id="last_name"></label></div>

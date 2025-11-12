@@ -2,7 +2,7 @@
 
 <!-- Controls: server search + client-side live search and view toggle + add patient -->
 <div class="controls">
-    <form method="get" action="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/templates/patients.html" class="server-search">
+    <form method="get" action="{{ url_for('patients') }}" class="server-search">
         <input type="text" name="search" placeholder="Server search by name or phone" value="{{ search }}">
         <button type="submit">Search</button>
     </form>
@@ -74,13 +74,13 @@
 <!-- Pagination controls (server-driven) -->
 <div class="pagination">
     {% if patients.has_prev %}
-        <a href="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/templates/patients.html">« Prev</a>
+        <a href="{{ url_for('patients', page=patients.prev_num, search=search) }}">« Prev</a>
     {% endif %}
 
     Page {{ patients.page }} of {{ patients.pages }}
 
     {% if patients.has_next %}
-        <a href="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/templates/patients.html">Next »</a>
+        <a href="{{ url_for('patients', page=patients.next_num, search=search) }}">Next »</a>
     {% endif %}
 </div>
 
@@ -88,7 +88,7 @@
 <div id="patientModal" class="modal" style="display:none;">
     <div class="modal-content">
         <h3 id="modalTitle">Add Patient</h3>
-        <form id="patientForm" method="post" action="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/templates/patients.html">
+        <form id="patientForm" method="post" action="{{ url_for('add_patient') }}">
             <input type="hidden" name="patient_id" id="patient_id">
             <div><label>First name <input name="first_name" id="first_name"></label></div>
             <div><label>Last name <input name="last_name" id="last_name"></label></div>

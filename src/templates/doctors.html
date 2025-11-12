@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hospital Management System - Doctors</title>
+    <link rel="stylesheet" href="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/static/style.css">
+    <style>
+        .doctors-table th, .doctors-table td { padding: 5px; }
+        .doctors-table { border-collapse: collapse; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Hospital Management System</h1>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('patients') }}">Patients</a></li>
+                <li><a href="{{ url_for('doctors') }}">Doctors</a></li>
+                <li><a href="{{ url_for('appointments') }}">Appointments</a></li>
+                <li><a href="{{ url_for('medical_records') }}">Medical Records</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            <h2>Doctors</h2>
+
+            <!-- Add Doctor Form -->
+            <div class="add-doctor-form">
+                <h3>Add New Doctor</h3>
+                <form method="POST" action="{{ url_for('doctors') }}">
+                    <input type="hidden" name="doctor_id" id="doctor_id" value="">
+
+                    <label for="first_name">First Name:</label>
+                    <input type="text" id="first_name" name="first_name" required>
+
+                    <label for="last_name">Last Name:</label>
+                    <input type="text" id="last_name" name="last_name" required>
+
+                    <label for="specialization">Specialization:</label>
+                    <input type="text" id="specialization" name="specialization" required>
+
+                    <label for="department">Department:</label>
+                    <input type="text" id="department" name="department">
+
+                    <label for="phone">Phone:</label>
+                    <input type="text" id="phone" name="phone">
+
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+
+                    <label for="status">Status:</label>
+                    <select id="status" name="status">
+                        <option value="Active" selected>Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+            <hr>
+
+            <!-- Doctors List -->
+            <h3>Doctors List</h3>
+            <table class="doctors-table" border="1">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Specialization</th>
+                        <th>Department</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doctor in doctors.items %}
+                    <tr>
+                        <td>{{ doctor.first_name }} {{ doctor.last_name }}</td>
+                        <td>{{ doctor.specialization }}</td>
+                        <td>{{ doctor.department or 'N/A' }}</td>
+                        <td>{{ doctor.phone or 'N/A' }}</td>
+                        <td>{{ doctor.email }}</td>
+                        <td>{{ doctor.status }}</td>
+                        <td>
+                            <form action="{{ url_for('delete_doctor', doctor_id=doctor.id) }}" method="post">
+                                <button type="submit">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; {{ datetime.utcnow().year }} Hospital Management System</p>
+    </footer>
+</body>
+</html>
