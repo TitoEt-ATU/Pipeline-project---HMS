@@ -1,25 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Records - Hospital Management System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<main>
 <h1>Medical Records</h1>
 
-<!-- Minimal page: show Add Patient inline so staff can create patient records from here -->
+<!-- Controls -->
 <div class="controls">
-    <button id="addPatientBtn" class="details-btn" type="button">Add Patient</button>
+    <button id="addRecordBtn" class="details-btn" type="button">+ Add Medical Record</button>
+    <input id="liveSearch" class="search-input" type="search" placeholder="Search by patient name or doctor...">
 </div>
 
-<!-- Reuse the same modal form used on patients page -->
-<div id="patientModal" class="modal" style="display:none;">
+<!-- Medical Records Table -->
+<div class="table-container">
+    <table id="recordsTable">
+        <thead>
+            <tr>
+                <th style="width:8%;">ID</th>
+                <th style="width:18%;">Patient</th>
+                <th style="width:18%;">Doctor</th>
+                <th style="width:15%;">Date Recorded</th>
+                <th style="width:41%;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if records.items %}
+                {% for record in records.items %}
+                <tr class="main-row">
+                    <td>{{ record.id }}</td>
+                    <td>
+                        {% if record.patient %}
+                            <strong>{{ record.patient.first_name }} {{ record.patient.last_name }}</strong><br>
+                            <small>ID: {{ record.patient_id }}</small>
+                        {% else %}
+                            Patient #{{ record.patient_id }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if record.doctor %}
+                            {{ record.doctor.first_name }} {{ record.doctor.last_name }}<br>
+                            <small>({{ record.doctor.specialization }})</small>
+                        {% else %}
+                            Doctor #{{ record.doctor_id if record.doctor_id else 'N/A' }}
+                        {% endif %}
+                    </td>
+                    <td>{{ record.date_recorded.strftime('%Y-%m-%d %H:%M') if record.date_recorded else 'N/A' }}</td>
+                    <td>
+                        <button class="details-btn" type="button">View Details</button>
+                        <button class="edit-btn" type="button" data-id="{{ record.id }}">Edit</button>
+                    </td>
+                </tr>
+                <tr class="details-row">
+                    <td colspan="5">
+                        <div class="details-grid">
+                            <div class="long"><strong>Diagnosis:</strong> {{ record.diagnosis or 'N/A' }}</div>
+                            <div class="long"><strong>Treatment:</strong> {{ record.treatment or 'N/A' }}</div>
+                            <div class="long"><strong>Prescription:</strong> {{ record.prescription or 'N/A' }}</div>
+                            <div class="long"><strong>Test Results:</strong> {{ record.test_results or 'N/A' }}</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="5" style="text-align:center; padding:20px;">No medical records found.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+<div class="pagination">
+    {% if records.has_prev %}
+        <a href="{{ url_for('medical_records', page=records.prev_num) }}">« Previous</a>
+    {% endif %}
+    
+    <span>Page {{ records.page }} of {{ records.pages }}</span>
+    
+    {% if records.has_next %}
+        <a href="{{ url_for('medical_records', page=records.next_num) }}">Next »</a>
+    {% endif %}
+</div>
+
+<!-- Medical Record Modal -->
+<div id="recordModal" class="modal" style="display:none;">
     <div class="modal-content">
-        <h3 id="modalTitle">Add Patient</h3>
-        <form id="patientForm" method="post" action="{{ url_for('patients') }}">
-            <input type="hidden" name="patient_id" id="patient_id">
-            <div><label>First name <input name="first_name" id="first_name"></label></div>
-            <div><label>Last name <input name="last_name" id="last_name"></label></div>
-            <div><label>Date of birth <input type="date" name="date_of_birth" id="date_of_birth"></label></div>
-            <div><label>Gender <input name="gender" id="gender"></label></div>
-            <div><label>Phone <input name="phone" id="phone"></label></div>
-            <div><label>Email <input name="email" id="email"></label></div>
-            <div style="margin-top:8px;"><button type="submit">Save</button> <button type="button" id="cancelPatient">Cancel</button></div>
+        <h3 id="modalTitle">Add Medical Record</h3>
+        <form id="recordForm" method="post" action="{{ url_for('add_medical_record') }}">
+            <input type="hidden" name="record_id" id="record_id">
+            <div><label>Patient <select name="patient_id" id="patient_id" required>
+                <option value="">-- Select Patient --</option>
+                {% for patient in all_patients %}
+                <option value="{{ patient.id }}">{{ patient.first_name }} {{ patient.last_name }}</option>
+                {% endfor %}
+            </select></label></div>
+            <div><label>Doctor <select name="doctor_id" id="doctor_id">
+                <option value="">-- Select Doctor (Optional) --</option>
+                {% for doctor in all_doctors %}
+                <option value="{{ doctor.id }}">{{ doctor.first_name }} {{ doctor.last_name }} ({{ doctor.specialization }})</option>
+                {% endfor %}
+            </select></label></div>
+            <div><label>Diagnosis <textarea name="diagnosis" id="diagnosis" placeholder="Patient diagnosis..."></textarea></label></div>
+            <div><label>Treatment <textarea name="treatment" id="treatment" placeholder="Treatment plan..."></textarea></label></div>
+            <div><label>Prescription <textarea name="prescription" id="prescription" placeholder="Prescribed medications..."></textarea></label></div>
+            <div><label>Test Results <textarea name="test_results" id="test_results" placeholder="Lab test results..."></textarea></label></div>
+            <div style="margin-top:8px;"><button type="submit">Save</button> <button type="button" id="cancelRecord">Cancel</button></div>
         </form>
     </div>
 </div>
+</main>
 
-<script src="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/static/patients.js"></script>
+<!-- Scripts -->
+<script>
+function showRecordModal(mode, recordId, data) {
+    const form = document.getElementById('recordForm');
+    const modal = document.getElementById('recordModal');
+    const title = document.getElementById('modalTitle');
+    
+    if (mode === 'add') {
+        title.textContent = 'Add Medical Record';
+        form.action = '{{ url_for("add_medical_record") }}';
+        document.getElementById('record_id').value = '';
+        document.getElementById('patient_id').value = '';
+        document.getElementById('doctor_id').value = '';
+        document.getElementById('diagnosis').value = '';
+        document.getElementById('treatment').value = '';
+        document.getElementById('prescription').value = '';
+        document.getElementById('test_results').value = '';
+    }
+    modal.style.display = 'flex';
+}
+
+function hideRecordModal() {
+    document.getElementById('recordModal').style.display = 'none';
+}
+
+document.getElementById('addRecordBtn').addEventListener('click', () => showRecordModal('add'));
+document.getElementById('cancelRecord').addEventListener('click', hideRecordModal);
+
+// Details toggle
+document.querySelectorAll('.details-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        if (e.target.textContent === 'View Details') {
+            const row = e.target.closest('tr');
+            const detailsRow = row.nextElementSibling;
+            if (detailsRow && detailsRow.classList.contains('details-row')) {
+                detailsRow.style.display = detailsRow.style.display === 'none' ? 'table-row' : 'none';
+            }
+        }
+    });
+});
+
+window.addEventListener('click', (e) => {
+    const modal = document.getElementById('recordModal');
+    if (e.target === modal) hideRecordModal();
+});
+</script>
+</body>
+</html>

@@ -1,3 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patients - Hospital Management System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<main>
 <h1>Patients</h1>
 
 <!-- Controls: server search + client-side live search and view toggle + add patient -->
@@ -77,7 +87,7 @@
         <a href="{{ url_for('patients', page=patients.prev_num, search=search) }}">« Prev</a>
     {% endif %}
 
-    Page {{ patients.page }} of {{ patients.pages }}
+    <span>Page {{ patients.page }} of {{ patients.pages }}</span>
 
     {% if patients.has_next %}
         <a href="{{ url_for('patients', page=patients.next_num, search=search) }}">Next »</a>
@@ -110,6 +120,9 @@
         </form>
     </div>
 </div>
+</main>
 
 <!-- Include client-side script for live filtering, sorting and modal handling -->
-<script src="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/static/patients.js"></script>
+<script src="{{ url_for('static', filename='patients.js') }}"></script>
+</body>
+</html>

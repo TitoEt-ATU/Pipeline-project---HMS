@@ -2,98 +2,156 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Hospital Management System - Doctors</title>
-    <link rel="stylesheet" href="/Users/titoetimiri/Hospital Management System/Pipeline-project---HMS/src/static/style.css">
-    <style>
-        .doctors-table th, .doctors-table td { padding: 5px; }
-        .doctors-table { border-collapse: collapse; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctors - Hospital Management System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <header>
-        <h1>Hospital Management System</h1>
-        <nav>
-            <ul>
-                <li><a href="{{ url_for('patients') }}">Patients</a></li>
-                <li><a href="{{ url_for('doctors') }}">Doctors</a></li>
-                <li><a href="{{ url_for('appointments') }}">Appointments</a></li>
-                <li><a href="{{ url_for('medical_records') }}">Medical Records</a></li>
-            </ul>
-        </nav>
-    </header>
+<main>
+<h1>Doctors</h1>
 
-    <main>
-        <div class="container">
-            <h2>Doctors</h2>
+<!-- Controls -->
+<div class="controls">
+    <button id="addDoctorBtn" class="details-btn" type="button">+ Add Doctor</button>
+</div>
 
-            <!-- Add Doctor Form -->
-            <div class="add-doctor-form">
-                <h3>Add New Doctor</h3>
-                <form method="POST" action="{{ url_for('doctors') }}">
-                    <input type="hidden" name="doctor_id" id="doctor_id" value="">
+<!-- Doctors List -->
+<div class="table-container">
+    <table id="doctorsTable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Specialization</th>
+                <th>Department</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if doctors.items %}
+                {% for doctor in doctors.items %}
+                <tr class="main-row">
+                    <td><strong>{{ doctor.first_name }} {{ doctor.last_name }}</strong></td>
+                    <td>{{ doctor.specialization }}</td>
+                    <td>{{ doctor.department or 'N/A' }}</td>
+                    <td>{{ doctor.phone or 'N/A' }}</td>
+                    <td>{{ doctor.email }}</td>
+                    <td><span class="status-badge status-{{ doctor.status.lower() if doctor.status }}">{{ doctor.status or 'Active' }}</span></td>
+                    <td>
+                        <button class="edit-btn" type="button" data-id="{{ doctor.id }}" data-first="{{ doctor.first_name }}" data-last="{{ doctor.last_name }}" data-spec="{{ doctor.specialization }}" data-dept="{{ doctor.department or '' }}" data-phone="{{ doctor.phone or '' }}" data-email="{{ doctor.email }}" data-status="{{ doctor.status or 'Active' }}">Edit</button>
+                        <form action="{{ url_for('delete_doctor', doctor_id=doctor.id) }}" method="post" style="display:inline;">
+                            <button type="submit" class="edit-btn" style="border-color:#d32f2f; color:#d32f2f;" onclick="return confirm('Delete this doctor?');">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="7" style="text-align:center; padding:20px;">No doctors found.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
 
-                    <label for="first_name">First Name:</label>
-                    <input type="text" id="first_name" name="first_name" required>
+<!-- Pagination -->
+<div class="pagination">
+    {% if doctors.has_prev %}
+        <a href="{{ url_for('doctors', page=doctors.prev_num) }}">« Previous</a>
+    {% endif %}
+    
+    <span>Page {{ doctors.page }} of {{ doctors.pages }}</span>
+    
+    {% if doctors.has_next %}
+        <a href="{{ url_for('doctors', page=doctors.next_num) }}">Next »</a>
+    {% endif %}
+</div>
 
-                    <label for="last_name">Last Name:</label>
-                    <input type="text" id="last_name" name="last_name" required>
+<!-- Modal form for add/edit doctor -->
+<div id="doctorModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h3 id="modalTitle">Add Doctor</h3>
+        <form id="doctorForm" method="post" action="{{ url_for('add_doctor') }}">
+            <input type="hidden" name="doctor_id" id="doctor_id">
+            <div><label>First name <input name="first_name" id="first_name" required></label></div>
+            <div><label>Last name <input name="last_name" id="last_name" required></label></div>
+            <div><label>Specialization <input name="specialization" id="specialization" required></label></div>
+            <div><label>Department <input name="department" id="department"></label></div>
+            <div><label>Phone <input name="phone" id="phone"></label></div>
+            <div><label>Email <input type="email" name="email" id="email" required></label></div>
+            <div><label>Status <select name="status" id="status">
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+            </select></label></div>
+            <div style="margin-top:8px;"><button type="submit">Save</button> <button type="button" id="cancelDoctor">Cancel</button></div>
+        </form>
+    </div>
+</div>
+</main>
 
-                    <label for="specialization">Specialization:</label>
-                    <input type="text" id="specialization" name="specialization" required>
+<!-- Include client-side script for modal handling -->
+<script>
+function showDoctorModal(mode, doctorId, data) {
+    const form = document.getElementById('doctorForm');
+    const modal = document.getElementById('doctorModal');
+    const title = document.getElementById('modalTitle');
+    
+    if (mode === 'add') {
+        title.textContent = 'Add Doctor';
+        form.action = '{{ url_for("add_doctor") }}';
+        document.getElementById('doctor_id').value = '';
+        document.getElementById('first_name').value = '';
+        document.getElementById('last_name').value = '';
+        document.getElementById('specialization').value = '';
+        document.getElementById('department').value = '';
+        document.getElementById('phone').value = '';
+        document.getElementById('email').value = '';
+        document.getElementById('status').value = 'Active';
+    } else if (mode === 'edit') {
+        title.textContent = 'Edit Doctor';
+        form.action = '{{ url_for("update_doctor", doctor_id="0") }}'.replace('0', doctorId);
+        document.getElementById('doctor_id').value = doctorId;
+        document.getElementById('first_name').value = data.first_name || '';
+        document.getElementById('last_name').value = data.last_name || '';
+        document.getElementById('specialization').value = data.specialization || '';
+        document.getElementById('department').value = data.department || '';
+        document.getElementById('phone').value = data.phone || '';
+        document.getElementById('email').value = data.email || '';
+        document.getElementById('status').value = data.status || 'Active';
+    }
+    modal.style.display = 'flex';
+}
 
-                    <label for="department">Department:</label>
-                    <input type="text" id="department" name="department">
+function hideDoctorModal() {
+    document.getElementById('doctorModal').style.display = 'none';
+}
 
-                    <label for="phone">Phone:</label>
-                    <input type="text" id="phone" name="phone">
+document.getElementById('addDoctorBtn').addEventListener('click', () => showDoctorModal('add'));
+document.getElementById('cancelDoctor').addEventListener('click', hideDoctorModal);
 
-                    <label for="email">Email:</label>
-                    <input type="email" id="email" name="email" required>
+document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        if (e.target.closest('form')) return; // Skip delete button
+        const id = e.target.dataset.id;
+        const data = {
+            first_name: e.target.dataset.first,
+            last_name: e.target.dataset.last,
+            specialization: e.target.dataset.spec,
+            department: e.target.dataset.dept,
+            phone: e.target.dataset.phone,
+            email: e.target.dataset.email,
+            status: e.target.dataset.status
+        };
+        showDoctorModal('edit', id, data);
+    });
+});
 
-                    <label for="status">Status:</label>
-                    <select id="status" name="status">
-                        <option value="Active" selected>Active</option>
-                        <option value="Inactive">Inactive</option>
-                    </select>
-            <hr>
-
-            <!-- Doctors List -->
-            <h3>Doctors List</h3>
-            <table class="doctors-table" border="1">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Specialization</th>
-                        <th>Department</th>
-                        <th>Phone</th>
-                        <th>Email</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for doctor in doctors.items %}
-                    <tr>
-                        <td>{{ doctor.first_name }} {{ doctor.last_name }}</td>
-                        <td>{{ doctor.specialization }}</td>
-                        <td>{{ doctor.department or 'N/A' }}</td>
-                        <td>{{ doctor.phone or 'N/A' }}</td>
-                        <td>{{ doctor.email }}</td>
-                        <td>{{ doctor.status }}</td>
-                        <td>
-                            <form action="{{ url_for('delete_doctor', doctor_id=doctor.id) }}" method="post">
-                                <button type="submit">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </main>
-
-    <footer>
-        <p>&copy; {{ datetime.utcnow().year }} Hospital Management System</p>
-    </footer>
+window.addEventListener('click', (e) => {
+    const modal = document.getElementById('doctorModal');
+    if (e.target === modal) hideDoctorModal();
+});
+</script>
 </body>
 </html>

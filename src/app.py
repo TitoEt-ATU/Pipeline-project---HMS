@@ -140,47 +140,10 @@ def create_app():
         flash("Patient deleted successfully!", "info")
         return redirect(url_for('patients'))
         
-    @app.route('/doctors', methods=['GET', 'POST'])
+    @app.route('/doctors')
     def doctors():
         page = request.args.get('page', 1, type=int)
         search = request.args.get('search', '', type=str)
-
-        # Handle form submission for add or update
-        if request.method == 'POST':
-            form = request.form
-            doctor_id = form.get('doctor_id')
-
-            # If doctor_id exists, update; else, add new
-            if doctor_id:
-                doctor = Doctor.query.get_or_404(doctor_id)
-                doctor.first_name = form.get('first_name', doctor.first_name)
-                doctor.last_name = form.get('last_name', doctor.last_name)
-                doctor.specialization = form.get('specialization', doctor.specialization)
-                doctor.phone = form.get('phone', doctor.phone)
-                doctor.email = form.get('email', doctor.email)
-                doctor.department = form.get('department', doctor.department)
-                doctor.status = form.get('status', doctor.status)
-                flash("Doctor updated successfully!", "success")
-            else:
-                doctor = Doctor(
-                    first_name=form.get('first_name', ''),
-                    last_name=form.get('last_name', ''),
-                    specialization=form.get('specialization', ''),
-                    phone=form.get('phone'),
-                    email=form.get('email'),
-                    department=form.get('department'),
-                    status=form.get('status', 'Active')
-                )
-                db.session.add(doctor)
-                flash("Doctor added successfully!", "success")
-
-            try:
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-                flash("Error saving doctor data.", "danger")
-
-            return redirect(url_for('doctors'))
 
         # GET request: show doctors list
         query = Doctor.query
@@ -194,15 +157,51 @@ def create_app():
         doctors_paginated = query.order_by(Doctor.id).paginate(page=page, per_page=10)
         return render_template('doctors.html', doctors=doctors_paginated, search=search)
 
+    # Create a new doctor (form submission)
+    @app.route('/doctors/add', methods=['POST'])
+    def add_doctor():
+        form = request.form
+        try:
+            doctor = Doctor(
+                first_name=form.get('first_name'),
+                last_name=form.get('last_name'),
+                specialization=form.get('specialization'),
+                phone=form.get('phone'),
+                email=form.get('email'),
+                department=form.get('department'),
+                status=form.get('status', 'Active')
+            )
+            db.session.add(doctor)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+        return redirect(url_for('doctors'))
 
-    # ----------------- Delete Doctor -----------------
-    @app.route('/doctors/delete/<int:doctor_id>', methods=['POST'])
+    # Update an existing doctor (form submission)
+    @app.route('/doctors/<int:doctor_id>/update', methods=['POST'])
+    def update_doctor(doctor_id):
+        form = request.form
+        doctor = Doctor.query.get_or_404(doctor_id)
+        try:
+            doctor.first_name = form.get('first_name') or doctor.first_name
+            doctor.last_name = form.get('last_name') or doctor.last_name
+            doctor.specialization = form.get('specialization') or doctor.specialization
+            doctor.phone = form.get('phone')
+            doctor.email = form.get('email') or doctor.email
+            doctor.department = form.get('department')
+            doctor.status = form.get('status', 'Active')
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+        return redirect(url_for('doctors'))
+
+    # Delete a doctor
+    @app.route('/doctors/<int:doctor_id>/delete', methods=['POST'])
     def delete_doctor(doctor_id):
         doctor = Doctor.query.get_or_404(doctor_id)
         db.session.delete(doctor)
         db.session.commit()
-        flash("Doctor deleted successfully!", "info")
-        return redirect(url_for('add_or_list_doctors'))
+        return redirect(url_for('doctors'))
 
 
 
@@ -210,15 +209,62 @@ def create_app():
     @app.route('/appointments')
     def appointments():
         page = request.args.get('page', 1, type=int)
-        appointments_paginated = Appointment.query.order_by(Appointment.id).paginate(page=page, per_page=10)
-        return render_template('appointments.html', appointments=appointments_paginated)
+        appointments_paginated = Appointment.query.order_by(Appointment.appointment_date.desc()).paginate(page=page, per_page=10)
+        all_patients = Patient.query.all()
+        all_doctors = Doctor.query.all()
+        return render_template('appointments.html', appointments=appointments_paginated, all_patients=all_patients, all_doctors=all_doctors)
+
+    @app.route('/appointments/add', methods=['POST'])
+    def add_appointment():
+        form = request.form
+        try:
+            appt_date = None
+            if form.get('appointment_date'):
+                try:
+                    appt_date = datetime.strptime(form.get('appointment_date'), '%Y-%m-%dT%H:%M')
+                except Exception:
+                    pass
+            
+            appointment = Appointment(
+                patient_id=int(form.get('patient_id')),
+                doctor_id=int(form.get('doctor_id')),
+                appointment_date=appt_date,
+                status=form.get('status', 'Scheduled'),
+                reason=form.get('reason')
+            )
+            db.session.add(appointment)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+        return redirect(url_for('appointments'))
 
     # ----------------- Medical Records -----------------
     @app.route('/medical_records')
     def medical_records():
         page = request.args.get('page', 1, type=int)
         records_paginated = MedicalRecord.query.order_by(MedicalRecord.id).paginate(page=page, per_page=10)
-        return render_template('medical_records.html', records=records_paginated)
+        all_patients = Patient.query.all()
+        all_doctors = Doctor.query.all()
+        return render_template('medical_records.html', records=records_paginated, all_patients=all_patients, all_doctors=all_doctors)
+
+    @app.route('/medical_records/add', methods=['POST'])
+    def add_medical_record():
+        form = request.form
+        try:
+            medical_record = MedicalRecord(
+                patient_id=int(form.get('patient_id')),
+                doctor_id=int(form.get('doctor_id')) if form.get('doctor_id') else None,
+                diagnosis=form.get('diagnosis'),
+                treatment=form.get('treatment'),
+                prescription=form.get('prescription'),
+                test_results=form.get('test_results'),
+                date_recorded=datetime.now()
+            )
+            db.session.add(medical_record)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+        return redirect(url_for('medical_records'))
 
     return app
 

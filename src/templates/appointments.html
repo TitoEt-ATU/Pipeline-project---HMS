@@ -1,37 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointments - Hospital Management System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<main>
 <h1>Appointments</h1>
+
+<!-- Controls -->
+<div class="controls">
+    <button id="addAppointmentBtn" class="details-btn" type="button">+ Schedule Appointment</button>
+</div>
+
+<!-- Appointments Table -->
 <div class="table-container">
-    <table>
+    <table id="appointmentsTable">
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Patient</th>
-                <th>Doctor</th>
-                <th>Date</th>
-                <th>Time</th>
-                <th>Notes</th>
+                <th style="width:8%;">ID</th>
+                <th style="width:20%;">Patient</th>
+                <th style="width:20%;">Doctor</th>
+                <th style="width:18%;">Date & Time</th>
+                <th style="width:12%;">Status</th>
+                <th style="width:22%;">Reason</th>
             </tr>
         </thead>
         <tbody>
-            {% for appt in appointments.items %}
-            <tr>
-                <td>{{ appt.id }}</td>
-                <td>{{ appt.patient_id }}</td>
-                <td>{{ appt.doctor_id }}</td>
-                <td>{{ appt.date }}</td>
-                <td>{{ appt.time }}</td>
-                <td>{{ appt.notes }}</td>
-            </tr>
-            {% endfor %}
+            {% if appointments.items %}
+                {% for appt in appointments.items %}
+                <tr class="main-row">
+                    <td>{{ appt.id }}</td>
+                    <td>
+                        {% if appt.patient %}
+                            <strong>{{ appt.patient.first_name }} {{ appt.patient.last_name }}</strong><br>
+                            <small>ID: {{ appt.patient_id }}</small>
+                        {% else %}
+                            Patient #{{ appt.patient_id }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if appt.doctor %}
+                            <strong>{{ appt.doctor.first_name }} {{ appt.doctor.last_name }}</strong><br>
+                            <small>{{ appt.doctor.specialization }}</small>
+                        {% else %}
+                            Doctor #{{ appt.doctor_id }}
+                        {% endif %}
+                    </td>
+                    <td>{{ appt.appointment_date.strftime('%Y-%m-%d %H:%M') if appt.appointment_date else 'N/A' }}</td>
+                    <td><span class="status-badge status-{{ appt.status.lower().replace(' ', '-') if appt.status else 'scheduled' }}">{{ appt.status or 'Scheduled' }}</span></td>
+                    <td>{{ appt.reason or 'N/A' }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="6" style="text-align:center; padding:20px;">No appointments scheduled yet.</td>
+                </tr>
+            {% endif %}
         </tbody>
     </table>
 </div>
 
+<!-- Pagination -->
 <div class="pagination">
     {% if appointments.has_prev %}
-        <a href="{{ url_for('appointments', page=appointments.prev_num) }}">« Prev</a>
+        <a href="{{ url_for('appointments', page=appointments.prev_num) }}">« Previous</a>
     {% endif %}
-    Page {{ appointments.page }} of {{ appointments.pages }}
+    
+    <span>Page {{ appointments.page }} of {{ appointments.pages }}</span>
+    
     {% if appointments.has_next %}
         <a href="{{ url_for('appointments', page=appointments.next_num) }}">Next »</a>
     {% endif %}
 </div>
+
+<!-- Appointment Modal -->
+<div id="appointmentModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h3 id="modalTitle">Schedule Appointment</h3>
+        <form id="appointmentForm" method="post" action="{{ url_for('add_appointment') }}">
+            <input type="hidden" name="appointment_id" id="appointment_id">
+            <div><label>Patient <select name="patient_id" id="patient_id" required>
+                <option value="">-- Select Patient --</option>
+                {% for patient in all_patients %}
+                <option value="{{ patient.id }}">{{ patient.first_name }} {{ patient.last_name }}</option>
+                {% endfor %}
+            </select></label></div>
+            <div><label>Doctor <select name="doctor_id" id="doctor_id" required>
+                <option value="">-- Select Doctor --</option>
+                {% for doctor in all_doctors %}
+                <option value="{{ doctor.id }}">{{ doctor.first_name }} {{ doctor.last_name }} ({{ doctor.specialization }})</option>
+                {% endfor %}
+            </select></label></div>
+            <div><label>Appointment Date & Time <input type="datetime-local" name="appointment_date" id="appointment_date" required></label></div>
+            <div><label>Status <select name="status" id="status">
+                <option value="Scheduled">Scheduled</option>
+                <option value="Checked-In">Checked-In</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+            </select></label></div>
+            <div><label>Reason <textarea name="reason" id="reason" placeholder="Reason for appointment"></textarea></label></div>
+            <div style="margin-top:8px;"><button type="submit">Save</button> <button type="button" id="cancelAppointment">Cancel</button></div>
+        </form>
+    </div>
+</div>
+</main>
+
+<!-- Scripts -->
+<script>
+function showAppointmentModal(mode, appointmentId, data) {
+    const form = document.getElementById('appointmentForm');
+    const modal = document.getElementById('appointmentModal');
+    const title = document.getElementById('modalTitle');
+    
+    if (mode === 'add') {
+        title.textContent = 'Schedule Appointment';
+        form.action = '{{ url_for("add_appointment") }}';
+        document.getElementById('appointment_id').value = '';
+        document.getElementById('patient_id').value = '';
+        document.getElementById('doctor_id').value = '';
+        document.getElementById('appointment_date').value = '';
+        document.getElementById('status').value = 'Scheduled';
+        document.getElementById('reason').value = '';
+    }
+    modal.style.display = 'flex';
+}
+
+function hideAppointmentModal() {
+    document.getElementById('appointmentModal').style.display = 'none';
+}
+
+document.getElementById('addAppointmentBtn').addEventListener('click', () => showAppointmentModal('add'));
+document.getElementById('cancelAppointment').addEventListener('click', hideAppointmentModal);
+
+window.addEventListener('click', (e) => {
+    const modal = document.getElementById('appointmentModal');
+    if (e.target === modal) hideAppointmentModal();
+});
+</script>
+</body>
+</html>
