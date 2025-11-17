@@ -44,7 +44,4 @@ jobs:
 
       - name: Post-build: print image info
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        run: |
-          echo "Built and pushed images:"
-          echo "${{ env.IMAGE_NAME }}:${{ github.sha }}"
-          echo "${{ env.IMAGE_NAME }}:latest"
+        run: echo "Built and pushed images:"; echo "${{ env.IMAGE_NAME }}:${{ github.sha }}"; echo "${{ env.IMAGE_NAME }}:latest"
