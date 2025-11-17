@@ -1,0 +1,31 @@
+<!-- Navigation bar -->
+<nav class="navbar">
+  <div class="nav-container">
+    <div class="nav-logo">
+      <a href="{{ url_for('home') }}">🏥 HMS</a>
+    </div>
+    <ul class="nav-menu">
+      <li><a href="{{ url_for('home') }}" class="nav-link {% if request.endpoint == 'home' %}active{% endif %}">Home</a></li>
+      <li><a href="{{ url_for('patients') }}" class="nav-link {% if request.endpoint == 'patients' %}active{% endif %}">Patients</a></li>
+      <li><a href="{{ url_for('doctors') }}" class="nav-link {% if request.endpoint == 'doctors' %}active{% endif %}">Doctors</a></li>
+      <li><a href="{{ url_for('appointments') }}" class="nav-link {% if request.endpoint == 'appointments' %}active{% endif %}">Appointments</a></li>
+      <li><a href="{{ url_for('medical_records') }}" class="nav-link {% if request.endpoint == 'medical_records' %}active{% endif %}">Medical Records</a></li>
+    </ul>
+    <div class="nav-toggle" id="navToggle">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+</nav>
+
+<script>
+  // Mobile menu toggle
+  const navToggle = document.getElementById('navToggle');
+  const navMenu = document.querySelector('.nav-menu');
+  if (navToggle) {
+    navToggle.addEventListener('click', () => {
+      navMenu.classList.toggle('active');
+    });
+  }
+</script>

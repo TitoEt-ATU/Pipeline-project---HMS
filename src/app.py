@@ -1,5 +1,5 @@
 from flask import Flask, request, render_template, redirect, url_for, flash
-from datetime import datetime
+from datetime import datetime, timedelta
 from config.settings import Config
 from src.extensions import db, migrate
 from flask_sqlalchemy import SQLAlchemy
@@ -209,6 +209,9 @@ def create_app():
     @app.route('/appointments')
     def appointments():
         page = request.args.get('page', 1, type=int)
+        # The main appointments page uses a client-side calendar that fetches
+        # appointment data from JSON endpoints. We still provide lists of
+        # patients and doctors for form selects.
         appointments_paginated = Appointment.query.order_by(Appointment.appointment_date.desc()).paginate(page=page, per_page=10)
         all_patients = Patient.query.all()
         all_doctors = Doctor.query.all()
@@ -236,7 +239,116 @@ def create_app():
             db.session.commit()
         except Exception:
             db.session.rollback()
+        # If this is an AJAX/JSON request, return JSON; otherwise redirect.
+        if request.headers.get('Accept') == 'application/json' or request.is_json:
+            return {'success': True, 'appointment': appointment.to_dict()}, 201
         return redirect(url_for('appointments'))
+
+    # --------- Appointments API (JSON) ---------
+    @app.route('/api/appointments', methods=['GET'])
+    def api_get_appointments():
+        # Optional start/end ISO params to filter a range
+        start = request.args.get('start')
+        end = request.args.get('end')
+        query = Appointment.query
+        try:
+            if start:
+                s = datetime.fromisoformat(start)
+                query = query.filter(Appointment.appointment_date >= s)
+            if end:
+                e = datetime.fromisoformat(end)
+                query = query.filter(Appointment.appointment_date <= e)
+        except Exception:
+            pass
+        appts = query.order_by(Appointment.appointment_date).all()
+        return {'appointments': [a.to_dict() for a in appts]}
+
+    @app.route('/api/appointments', methods=['POST'])
+    def api_create_appointment():
+        data = request.get_json() or request.form
+        try:
+            appt_date = None
+            if data.get('appointment_date'):
+                appt_date = datetime.fromisoformat(data.get('appointment_date'))
+        except Exception:
+            appt_date = None
+        try:
+            # basic overlap check: prevent double-booking the same doctor within a 30-minute window
+            DOCTOR_BUFFER_MINUTES = 30
+            doctor_id = int(data.get('doctor_id')) if data.get('doctor_id') else None
+            if doctor_id and appt_date:
+                window_start = appt_date - timedelta(minutes=DOCTOR_BUFFER_MINUTES)
+                window_end = appt_date + timedelta(minutes=DOCTOR_BUFFER_MINUTES)
+                overlapping = Appointment.query.filter(
+                    Appointment.doctor_id == doctor_id,
+                    Appointment.appointment_date >= window_start,
+                    Appointment.appointment_date <= window_end
+                ).first()
+                if overlapping:
+                    return {'success': False, 'error': 'Time slot conflict for selected doctor.'}, 409
+
+            appointment = Appointment(
+                patient_id=int(data.get('patient_id')) if data.get('patient_id') else None,
+                doctor_id=doctor_id,
+                appointment_date=appt_date,
+                status=data.get('status', 'Scheduled'),
+                reason=data.get('reason')
+            )
+            db.session.add(appointment)
+            db.session.commit()
+            return {'success': True, 'appointment': appointment.to_dict()}, 201
+        except Exception as e:
+            db.session.rollback()
+            return {'success': False, 'error': str(e)}, 400
+
+    @app.route('/api/appointments/<int:appt_id>', methods=['PUT','PATCH'])
+    def api_update_appointment(appt_id):
+        appointment = Appointment.query.get_or_404(appt_id)
+        data = request.get_json() or request.form
+        try:
+            if data.get('patient_id'):
+                appointment.patient_id = int(data.get('patient_id'))
+            if data.get('doctor_id'):
+                appointment.doctor_id = int(data.get('doctor_id'))
+            if data.get('appointment_date'):
+                try:
+                    new_date = datetime.fromisoformat(data.get('appointment_date'))
+                    # check overlap for same doctor
+                    DOCTOR_BUFFER_MINUTES = 30
+                    doctor_id = int(data.get('doctor_id')) if data.get('doctor_id') else appointment.doctor_id
+                    window_start = new_date - timedelta(minutes=DOCTOR_BUFFER_MINUTES)
+                    window_end = new_date + timedelta(minutes=DOCTOR_BUFFER_MINUTES)
+                    overlapping = Appointment.query.filter(
+                        Appointment.doctor_id == doctor_id,
+                        Appointment.id != appointment.id,
+                        Appointment.appointment_date >= window_start,
+                        Appointment.appointment_date <= window_end
+                    ).first()
+                    if overlapping:
+                        return {'success': False, 'error': 'Time slot conflict for selected doctor.'}, 409
+                    appointment.appointment_date = new_date
+                except Exception:
+                    pass
+            if data.get('status') is not None:
+                appointment.status = data.get('status')
+            if data.get('reason') is not None:
+                appointment.reason = data.get('reason')
+            db.session.commit()
+            return {'success': True, 'appointment': appointment.to_dict()}
+        except Exception as e:
+            db.session.rollback()
+            return {'success': False, 'error': str(e)}, 400
+
+    @app.route('/api/appointments/<int:appt_id>', methods=['DELETE'])
+    def api_delete_appointment(appt_id):
+        appointment = Appointment.query.get_or_404(appt_id)
+        try:
+            db.session.delete(appointment)
+            db.session.commit()
+            return {'success': True}
+        except Exception as e:
+            db.session.rollback()
+            return {'success': False, 'error': str(e)}, 400
 
     # ----------------- Medical Records -----------------
     @app.route('/medical_records')

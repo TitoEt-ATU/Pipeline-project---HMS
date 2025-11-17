@@ -7,138 +7,336 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+{% include 'nav.html' %}
 <main>
-<h1>Appointments</h1>
+    <h1>Appointments</h1>
 
-<!-- Controls -->
-<div class="controls">
-    <button id="addAppointmentBtn" class="details-btn" type="button">+ Schedule Appointment</button>
-</div>
-
-<!-- Appointments Table -->
-<div class="table-container">
-    <table id="appointmentsTable">
-        <thead>
-            <tr>
-                <th style="width:8%;">ID</th>
-                <th style="width:20%;">Patient</th>
-                <th style="width:20%;">Doctor</th>
-                <th style="width:18%;">Date & Time</th>
-                <th style="width:12%;">Status</th>
-                <th style="width:22%;">Reason</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% if appointments.items %}
-                {% for appt in appointments.items %}
-                <tr class="main-row">
-                    <td>{{ appt.id }}</td>
-                    <td>
-                        {% if appt.patient %}
-                            <strong>{{ appt.patient.first_name }} {{ appt.patient.last_name }}</strong><br>
-                            <small>ID: {{ appt.patient_id }}</small>
-                        {% else %}
-                            Patient #{{ appt.patient_id }}
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if appt.doctor %}
-                            <strong>{{ appt.doctor.first_name }} {{ appt.doctor.last_name }}</strong><br>
-                            <small>{{ appt.doctor.specialization }}</small>
-                        {% else %}
-                            Doctor #{{ appt.doctor_id }}
-                        {% endif %}
-                    </td>
-                    <td>{{ appt.appointment_date.strftime('%Y-%m-%d %H:%M') if appt.appointment_date else 'N/A' }}</td>
-                    <td><span class="status-badge status-{{ appt.status.lower().replace(' ', '-') if appt.status else 'scheduled' }}">{{ appt.status or 'Scheduled' }}</span></td>
-                    <td>{{ appt.reason or 'N/A' }}</td>
-                </tr>
-                {% endfor %}
-            {% else %}
-                <tr>
-                    <td colspan="6" style="text-align:center; padding:20px;">No appointments scheduled yet.</td>
-                </tr>
-            {% endif %}
-        </tbody>
-    </table>
-</div>
-
-<!-- Pagination -->
-<div class="pagination">
-    {% if appointments.has_prev %}
-        <a href="{{ url_for('appointments', page=appointments.prev_num) }}">« Previous</a>
-    {% endif %}
-    
-    <span>Page {{ appointments.page }} of {{ appointments.pages }}</span>
-    
-    {% if appointments.has_next %}
-        <a href="{{ url_for('appointments', page=appointments.next_num) }}">Next »</a>
-    {% endif %}
-</div>
-
-<!-- Appointment Modal -->
-<div id="appointmentModal" class="modal" style="display:none;">
-    <div class="modal-content">
-        <h3 id="modalTitle">Schedule Appointment</h3>
-        <form id="appointmentForm" method="post" action="{{ url_for('add_appointment') }}">
-            <input type="hidden" name="appointment_id" id="appointment_id">
-            <div><label>Patient <select name="patient_id" id="patient_id" required>
-                <option value="">-- Select Patient --</option>
-                {% for patient in all_patients %}
-                <option value="{{ patient.id }}">{{ patient.first_name }} {{ patient.last_name }}</option>
-                {% endfor %}
-            </select></label></div>
-            <div><label>Doctor <select name="doctor_id" id="doctor_id" required>
-                <option value="">-- Select Doctor --</option>
-                {% for doctor in all_doctors %}
-                <option value="{{ doctor.id }}">{{ doctor.first_name }} {{ doctor.last_name }} ({{ doctor.specialization }})</option>
-                {% endfor %}
-            </select></label></div>
-            <div><label>Appointment Date & Time <input type="datetime-local" name="appointment_date" id="appointment_date" required></label></div>
-            <div><label>Status <select name="status" id="status">
-                <option value="Scheduled">Scheduled</option>
-                <option value="Checked-In">Checked-In</option>
-                <option value="Completed">Completed</option>
-                <option value="Cancelled">Cancelled</option>
-            </select></label></div>
-            <div><label>Reason <textarea name="reason" id="reason" placeholder="Reason for appointment"></textarea></label></div>
-            <div style="margin-top:8px;"><button type="submit">Save</button> <button type="button" id="cancelAppointment">Cancel</button></div>
-        </form>
+    <div class="controls">
+        <div class="view-controls">
+            <button id="viewMonthBtn" class="details-btn">Month</button>
+            <button id="viewWeekBtn" class="details-btn">Week</button>
+            <button id="viewDayBtn" class="details-btn">Day</button>
+            <button id="viewListBtn" class="details-btn">List</button>
+        </div>
+        <div class="right-controls">
+            <select id="statusFilter">
+                <option value="">All statuses</option>
+                <option>Booked</option>
+                <option>Awaiting Confirmation</option>
+                <option>Checked-In</option>
+                <option>Completed</option>
+                <option>Cancelled</option>
+                <option>Rescheduled</option>
+                <option>No-Show</option>
+            </select>
+            <button id="addAppointmentBtn" class="details-btn">+ New</button>
+        </div>
     </div>
-</div>
+
+        <div id="calendarRoot" class="calendar-root">
+        <div id="calendarHeader" class="calendar-header">
+            <button id="prevBtn">‹</button>
+            <h2 id="currentLabel"></h2>
+            <button id="nextBtn">›</button>
+        </div>
+
+            <div id="monthView" class="month-view"></div>
+            <div id="weekView" class="week-view" style="display:none;"></div>
+            <div id="dayView" class="day-view" style="display:none;"></div>
+            <div id="listView" class="list-view" style="display:none;"></div>
+    </div>
+
+    <!-- Modal -->
+    <div id="appointmentModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h3 id="modalTitle">Appointment</h3>
+            <form id="appointmentForm">
+                <input type="hidden" id="appointment_id" name="appointment_id">
+                <div><label>Patient <select name="patient_id" id="patient_id" required>
+                    <option value="">-- Select Patient --</option>
+                    {% for patient in all_patients %}
+                        <option value="{{ patient.id }}">{{ patient.first_name }} {{ patient.last_name }}</option>
+                    {% endfor %}
+                </select></label></div>
+                <div><label>Doctor <select name="doctor_id" id="doctor_id" required>
+                    <option value="">-- Select Doctor --</option>
+                    {% for doctor in all_doctors %}
+                        <option value="{{ doctor.id }}">{{ doctor.first_name }} {{ doctor.last_name }} ({{ doctor.specialization }})</option>
+                    {% endfor %}
+                </select></label></div>
+                <div><label>Date & time <input type="datetime-local" id="appointment_date" name="appointment_date" required></label></div>
+                <div><label>Status <select id="status" name="status">
+                    <option>Booked</option>
+                    <option>Awaiting Confirmation</option>
+                    <option>Checked-In</option>
+                    <option>Completed</option>
+                    <option>Cancelled</option>
+                    <option>Rescheduled</option>
+                    <option>No-Show</option>
+                </select></label></div>
+                <div><label>Reason <textarea id="reason" name="reason"></textarea></label></div>
+                <div class="modal-actions">
+                    <button type="submit">Save</button>
+                    <button type="button" id="deleteAppointmentBtn" style="display:none;">Delete</button>
+                    <button type="button" id="cancelAppointment">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </main>
 
-<!-- Scripts -->
 <script>
-function showAppointmentModal(mode, appointmentId, data) {
-    const form = document.getElementById('appointmentForm');
-    const modal = document.getElementById('appointmentModal');
-    const title = document.getElementById('modalTitle');
-    
-    if (mode === 'add') {
-        title.textContent = 'Schedule Appointment';
-        form.action = '{{ url_for("add_appointment") }}';
-        document.getElementById('appointment_id').value = '';
-        document.getElementById('patient_id').value = '';
-        document.getElementById('doctor_id').value = '';
-        document.getElementById('appointment_date').value = '';
-        document.getElementById('status').value = 'Scheduled';
-        document.getElementById('reason').value = '';
+// Lightweight client-side calendar
+const state = {
+    view: 'month',
+    date: new Date(),
+    appointments: [],
+    statusFilter: ''
+};
+
+const formatDateISO = (d) => new Date(d).toISOString();
+
+async function fetchAppointments(start, end) {
+    const qs = new URLSearchParams();
+    if (start) qs.set('start', start);
+    if (end) qs.set('end', end);
+    const res = await fetch('/api/appointments?' + qs.toString());
+    const data = await res.json();
+    state.appointments = data.appointments || [];
+}
+
+function renderMonth() {
+    const root = document.getElementById('monthView');
+    root.innerHTML = '';
+    const date = new Date(state.date.getFullYear(), state.date.getMonth(), 1);
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    document.getElementById('currentLabel').textContent = date.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+
+    // start on Sunday
+    const startDay = new Date(year, month, 1 - date.getDay());
+    for (let week = 0; week < 6; week++) {
+        const row = document.createElement('div');
+        row.className = 'calendar-row';
+        for (let d = 0; d < 7; d++) {
+            const cellDate = new Date(startDay.getFullYear(), startDay.getMonth(), startDay.getDate() + week*7 + d);
+            const cell = document.createElement('div');
+            cell.className = 'calendar-cell' + (cellDate.getMonth() !== month ? ' muted' : '');
+            const dayLabel = document.createElement('div'); dayLabel.className = 'cell-day'; dayLabel.textContent = cellDate.getDate();
+            cell.appendChild(dayLabel);
+
+            const apptsForDay = state.appointments.filter(a => {
+                const ad = new Date(a.appointment_date);
+                return ad.getFullYear()===cellDate.getFullYear() && ad.getMonth()===cellDate.getMonth() && ad.getDate()===cellDate.getDate() && (state.statusFilter ? a.status===state.statusFilter : true);
+            });
+            const list = document.createElement('div'); list.className='cell-list';
+            apptsForDay.slice(0,3).forEach(a => {
+                const item = document.createElement('div');
+                item.className = 'cell-appt status-' + (a.status||'scheduled').toLowerCase().replace(/\s+/g,'-');
+                item.textContent = new Date(a.appointment_date).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) + ' — ' + (a.patient_name || ('Patient #' + a.patient_id));
+                item.dataset.apptId = a.id;
+                item.addEventListener('click', (e) => { e.stopPropagation(); openEditModal(a); });
+                list.appendChild(item);
+            });
+            if (apptsForDay.length>3) {
+                const more = document.createElement('div'); more.className='cell-more'; more.textContent = `+${apptsForDay.length-3} more`;
+                more.addEventListener('click', (e)=>{ e.stopPropagation(); openDayList(cellDate); });
+                list.appendChild(more);
+            }
+            cell.appendChild(list);
+
+            cell.addEventListener('click', () => openAddModal(cellDate));
+            row.appendChild(cell);
+        }
+        root.appendChild(row);
     }
-    modal.style.display = 'flex';
 }
 
-function hideAppointmentModal() {
-    document.getElementById('appointmentModal').style.display = 'none';
+function renderListView() {
+    const root = document.getElementById('listView');
+    root.innerHTML = '';
+    const ul = document.createElement('div'); ul.className='appt-list';
+    state.appointments.forEach(a => {
+        if (state.statusFilter && a.status !== state.statusFilter) return;
+        const item = document.createElement('div'); item.className='appt-item';
+        item.innerHTML = `<div class="appt-time">${new Date(a.appointment_date).toLocaleString()}</div><div class="appt-main"><strong>${a.patient_name||'Patient #' + a.patient_id}</strong><div>${a.doctor_name||''}</div></div><div class="appt-status"><span class="status-badge status-${(a.status||'scheduled').toLowerCase().replace(/\s+/g,'-')}">${a.status}</span></div>`;
+        item.dataset.apptId = a.id;
+        item.addEventListener('click', () => openEditModal(a));
+        ul.appendChild(item);
+    });
+    root.appendChild(ul);
 }
 
-document.getElementById('addAppointmentBtn').addEventListener('click', () => showAppointmentModal('add'));
-document.getElementById('cancelAppointment').addEventListener('click', hideAppointmentModal);
+function renderWeekView() {
+    const root = document.getElementById('weekView');
+    root.innerHTML = '';
+    const startOfWeek = new Date(state.date);
+    startOfWeek.setDate(state.date.getDate() - state.date.getDay());
+    document.getElementById('currentLabel').textContent = `Week of ${startOfWeek.toLocaleDateString()}`;
+    const hours = Array.from({length: 12}, (_,i)=>8+i); // 8:00 - 19:00
+    const header = document.createElement('div'); header.className='week-grid-header';
+    header.appendChild(document.createElement('div'));
+    for (let d=0; d<7; d++) { const col = document.createElement('div'); col.className='week-col-header'; col.textContent = new Date(startOfWeek.getFullYear(), startOfWeek.getMonth(), startOfWeek.getDate()+d).toLocaleDateString(undefined,{weekday:'short', month:'short', day:'numeric'}); header.appendChild(col); }
+    root.appendChild(header);
+    const grid = document.createElement('div'); grid.className='week-grid';
+    hours.forEach(h => {
+        const row = document.createElement('div'); row.className='week-row';
+        const timeCell = document.createElement('div'); timeCell.className='time-cell'; timeCell.textContent = `${h}:00`;
+        row.appendChild(timeCell);
+        for (let d=0; d<7; d++) {
+            const cellDate = new Date(startOfWeek.getFullYear(), startOfWeek.getMonth(), startOfWeek.getDate()+d, h, 0);
+            const cell = document.createElement('div'); cell.className='week-cell';
+            const appts = state.appointments.filter(a=>{ const ad=new Date(a.appointment_date); return ad.getFullYear()===cellDate.getFullYear() && ad.getMonth()===cellDate.getMonth() && ad.getDate()===cellDate.getDate() && ad.getHours()===cellDate.getHours(); });
+            appts.forEach(a=>{ const it=document.createElement('div'); it.className='week-appt status-'+(a.status||'booked').toLowerCase().replace(/\s+/g,'-'); it.textContent = (a.patient_name||('Patient '+a.patient_id)); it.addEventListener('click', (e)=>{ e.stopPropagation(); openEditModal(a); }); cell.appendChild(it); });
+            cell.addEventListener('click', () => openAddModal(cellDate));
+            row.appendChild(cell);
+        }
+        grid.appendChild(row);
+    });
+    root.appendChild(grid);
+}
 
-window.addEventListener('click', (e) => {
+function renderDayView() {
+    const root = document.getElementById('dayView');
+    root.innerHTML = '';
+    const day = state.date;
+    document.getElementById('currentLabel').textContent = day.toLocaleDateString();
+    const hours = Array.from({length: 12}, (_,i)=>8+i);
+    const grid = document.createElement('div'); grid.className='day-grid';
+    hours.forEach(h=>{
+        const row = document.createElement('div'); row.className='day-row';
+        const time = document.createElement('div'); time.className='day-time'; time.textContent = `${h}:00`;
+        const slot = document.createElement('div'); slot.className='day-slot';
+        const cellDate = new Date(day.getFullYear(), day.getMonth(), day.getDate(), h, 0);
+        const appts = state.appointments.filter(a=>{ const ad=new Date(a.appointment_date); return ad.getFullYear()===cellDate.getFullYear() && ad.getMonth()===cellDate.getMonth() && ad.getDate()===cellDate.getDate() && ad.getHours()===cellDate.getHours(); });
+        appts.forEach(a=>{ const it=document.createElement('div'); it.className='day-appt status-'+(a.status||'booked').toLowerCase().replace(/\s+/g,'-'); it.textContent = new Date(a.appointment_date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + ' — ' + (a.patient_name||('Patient '+a.patient_id)); it.addEventListener('click',(e)=>{ e.stopPropagation(); openEditModal(a); }); slot.appendChild(it); });
+        slot.addEventListener('click', ()=> openAddModal(cellDate));
+        row.appendChild(time); row.appendChild(slot); grid.appendChild(row);
+    });
+    root.appendChild(grid);
+}
+
+function openDayList(date) {
+    // filter appointments for that day and show in list view
+    state.view='list';
+    document.getElementById('viewListBtn').classList.add('active');
+    document.getElementById('monthView').style.display='none';
+    document.getElementById('listView').style.display='block';
+    const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString();
+    const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate()+1).toISOString();
+    fetchAppointments(dayStart, dayEnd).then(()=>{ renderListView(); });
+}
+
+function openAddModal(date) {
     const modal = document.getElementById('appointmentModal');
-    if (e.target === modal) hideAppointmentModal();
-});
+    document.getElementById('modalTitle').textContent = 'Create Appointment';
+    document.getElementById('appointment_id').value='';
+    document.getElementById('patient_id').value='';
+    document.getElementById('doctor_id').value='';
+    document.getElementById('appointment_date').value = new Date(date.getFullYear(), date.getMonth(), date.getDate(), new Date().getHours(), 0).toISOString().slice(0,16);
+    document.getElementById('status').value='Booked';
+    document.getElementById('reason').value='';
+    document.getElementById('deleteAppointmentBtn').style.display='none';
+    modal.style.display='flex';
+}
+
+function openEditModal(appt) {
+    const modal = document.getElementById('appointmentModal');
+    document.getElementById('modalTitle').textContent = 'Edit Appointment';
+    document.getElementById('appointment_id').value=appt.id;
+    document.getElementById('patient_id').value=appt.patient_id||'';
+    document.getElementById('doctor_id').value=appt.doctor_id||'';
+    document.getElementById('appointment_date').value=new Date(appt.appointment_date).toISOString().slice(0,16);
+    document.getElementById('status').value=appt.status||'Booked';
+    document.getElementById('reason').value=appt.reason||'';
+    document.getElementById('deleteAppointmentBtn').style.display='inline-block';
+    modal.style.display='flex';
+}
+
+async function saveAppointment(e) {
+    e.preventDefault();
+    const id = document.getElementById('appointment_id').value;
+    const payload = {
+        patient_id: document.getElementById('patient_id').value,
+        doctor_id: document.getElementById('doctor_id').value,
+        appointment_date: document.getElementById('appointment_date').value,
+        status: document.getElementById('status').value,
+        reason: document.getElementById('reason').value
+    };
+    if (!payload.patient_id || !payload.doctor_id || !payload.appointment_date) {
+        alert('Please select patient, doctor and date/time');
+        return;
+    }
+        // client-side overlap check (30-minute buffer)
+        const BUFFER_MINUTES = 30;
+        const apptDate = new Date(payload.appointment_date);
+        const doctorId = payload.doctor_id;
+        const conflict = state.appointments.find(a => {
+            if (!a.doctor_id || !doctorId) return false;
+            if (id && String(a.id) === String(id)) return false; // ignore self
+            if (String(a.doctor_id) !== String(doctorId)) return false;
+            const other = new Date(a.appointment_date);
+            const diff = Math.abs(other - apptDate) / 60000; // minutes
+            return diff < BUFFER_MINUTES;
+        });
+        if (conflict) {
+            alert('Selected time conflicts with another appointment for this doctor.');
+            return;
+        }
+
+        if (id) {
+        const res = await fetch('/api/appointments/'+id, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (!data.success) alert('Error updating appointment: ' + (data.error||'unknown'));
+    } else {
+        const res = await fetch('/api/appointments', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (!data.success) alert('Error creating appointment: ' + (data.error||'unknown'));
+    }
+    hideAppointmentModal();
+    reloadAppointments();
+}
+
+async function deleteAppointment() {
+    const id = document.getElementById('appointment_id').value;
+    if (!id) return;
+    if (!confirm('Delete this appointment?')) return;
+    const res = await fetch('/api/appointments/'+id, { method: 'DELETE' });
+    const data = await res.json();
+    if (!data.success) alert('Error deleting: ' + (data.error||'unknown'));
+    hideAppointmentModal();
+    reloadAppointments();
+}
+
+function hideAppointmentModal() { document.getElementById('appointmentModal').style.display='none'; }
+
+async function reloadAppointments() {
+    // load a wide range around current month
+    const start = new Date(state.date.getFullYear(), state.date.getMonth()-1, 1).toISOString();
+    const end = new Date(state.date.getFullYear(), state.date.getMonth()+2, 0, 23,59,59).toISOString();
+    await fetchAppointments(start, end);
+    if (state.view==='month') { renderMonth(); } else { renderListView(); }
+}
+
+document.getElementById('addAppointmentBtn').addEventListener('click', ()=> openAddModal(new Date()));
+document.getElementById('cancelAppointment').addEventListener('click', hideAppointmentModal);
+document.getElementById('appointmentForm').addEventListener('submit', saveAppointment);
+document.getElementById('deleteAppointmentBtn').addEventListener('click', deleteAppointment);
+
+document.getElementById('viewMonthBtn').addEventListener('click', ()=>{ state.view='month'; document.getElementById('monthView').style.display='block'; document.getElementById('weekView').style.display='none'; document.getElementById('dayView').style.display='none'; document.getElementById('listView').style.display='none'; reloadAppointments(); });
+document.getElementById('viewWeekBtn').addEventListener('click', ()=>{ state.view='week'; document.getElementById('monthView').style.display='none'; document.getElementById('weekView').style.display='block'; document.getElementById('dayView').style.display='none'; document.getElementById('listView').style.display='none'; reloadAppointments().then(()=>renderWeekView()); });
+document.getElementById('viewDayBtn').addEventListener('click', ()=>{ state.view='day'; document.getElementById('monthView').style.display='none'; document.getElementById('weekView').style.display='none'; document.getElementById('dayView').style.display='block'; document.getElementById('listView').style.display='none'; reloadAppointments().then(()=>renderDayView()); });
+document.getElementById('viewListBtn').addEventListener('click', ()=>{ state.view='list'; document.getElementById('monthView').style.display='none'; document.getElementById('weekView').style.display='none'; document.getElementById('dayView').style.display='none'; document.getElementById('listView').style.display='block'; reloadAppointments(); });
+
+document.getElementById('prevBtn').addEventListener('click', ()=>{ state.date.setMonth(state.date.getMonth()-1); reloadAppointments(); });
+document.getElementById('nextBtn').addEventListener('click', ()=>{ state.date.setMonth(state.date.getMonth()+1); reloadAppointments(); });
+
+document.getElementById('statusFilter').addEventListener('change', (e)=>{ state.statusFilter = e.target.value; reloadAppointments(); });
+
+// initial load
+reloadAppointments();
+
 </script>
+
 </body>
 </html>
