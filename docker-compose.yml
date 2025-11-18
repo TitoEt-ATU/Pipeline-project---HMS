@@ -1,0 +1,76 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database Service
+  db:
+    image: postgres:16-alpine
+    container_name: hms-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-hospital_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-hospital_password}
+      POSTGRES_DB: ${DB_NAME:-hospital_management}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-hospital_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hms_network
+
+  # Flask Application Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hms-app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-hospital_user}:${DB_PASSWORD:-hospital_password}@db:5432/${DB_NAME:-hospital_management}
+      FLASK_ENV: ${FLASK_ENV:-production}
+      FLASK_APP: src.app:create_app
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+    ports:
+      - "${APP_PORT:-5000}:5000"
+    volumes:
+      - ./src:/app/src
+      - ./migrations:/app/migrations
+    command: gunicorn wsgi:application -b 0.0.0.0:5000 --workers 4 --timeout 120
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - hms_network
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy (Optional, for production-like setup)
+  nginx:
+    image: nginx:alpine
+    container_name: hms-nginx
+    depends_on:
+      - app
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "${NGINX_PORT:-80}:80"
+    networks:
+      - hms_network
+    restart: unless-stopped
+    profiles:
+      - production
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  hms_network:
+    driver: bridge

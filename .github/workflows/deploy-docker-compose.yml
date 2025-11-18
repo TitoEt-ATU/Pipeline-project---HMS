@@ -1,0 +1,111 @@
+name: Deploy to Docker Compose
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/hms
+
+jobs:
+  build-and-push:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to Environment
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy notification
+        run: |
+          echo "🚀 Deployment initiated"
+          echo "Image: ${{ needs.build-and-push.outputs.image-tag }}"
+          echo "Branch: ${{ github.ref }}"
+          echo "Commit: ${{ github.sha }}"
+
+      # For actual cloud deployment, add your cloud provider's steps here
+      # Examples:
+      # - AWS ECS/ECR deployment
+      # - Azure App Service deployment
+      # - Google Cloud Run deployment
+      # - DigitalOcean App Platform
+      # - Heroku deployment
+      # - Self-hosted Docker Swarm/K8s
+
+      - name: Post deployment status
+        run: |
+          echo "✅ Docker image built and pushed successfully"
+          echo "📦 To deploy locally, run: docker-compose up -d"
+          echo "🌐 Application will be available on configured port"
+
+  notify:
+    name: Send Notifications
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Deployment status
+        run: |
+          if [ "${{ needs.deploy.result }}" == "success" ]; then
+            echo "✅ Deployment completed successfully"
+          else
+            echo "❌ Deployment failed"
+          fi
