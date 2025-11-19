@@ -34,15 +34,15 @@ services:
       DATABASE_URL: postgresql://${DB_USER:-hospital_user}:${DB_PASSWORD:-hospital_password}@db:5432/${DB_NAME:-hospital_management}
       FLASK_ENV: ${FLASK_ENV:-production}
       FLASK_APP: src.app:create_app
-      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      SECRET_KEY: mysecret
     ports:
-      - "${APP_PORT:-5000}:5000"
+      - "5001:5000"
     volumes:
       - ./src:/app/src
       - ./migrations:/app/migrations
-    command: gunicorn wsgi:application -b 0.0.0.0:5000 --workers 4 --timeout 120
+    command: gunicorn wsgi:application -b 0.0.0.0:5001 --workers 4 --timeout 120
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      test: ["CMD", "curl", "-f", "http://localhost:5001/"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -1,9 +1,8 @@
 {
   "info": {
-    "_postman_id": "a4c9882f-e35c-4c6f-8005-988ca2b918cf",
+    "_postman_id": "ab07455e-777f-4069-8f68-e748b3e4cefb",
     "name": "HospitalManagamentSystem",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "49416803"
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
@@ -12,7 +11,6 @@
         {
           "listen": "test",
           "script": {
-            "id": "a26445ce-c174-4f16-9a7c-17241e9e5d52",
             "exec": [
               "pm.test(\"Status is 201\", () => {",
               "    pm.response.to.have.status(201);",
@@ -24,16 +22,21 @@
               "});",
               ""
             ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript"
           }
         }
       ],
-      "id": "5698a9b5-99a9-476e-9d9d-b17de2a8184a",
       "request": {
         "method": "POST",
-        "header": [],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"patient_id\": 12,\n  \"doctor_id\": 5,\n  \"appointment_time\": \"2025-02-10 14:00:00\",\n  \"reason\": \"Follow-up consultation\"\n}\n",
@@ -44,7 +47,7 @@
           }
         },
         "url": {
-          "raw": "http://127.0.0.1:5000/appointments",
+          "raw": "http://127.0.0.1:5001/appointments",
           "protocol": "http",
           "host": [
             "127",
@@ -52,13 +55,12 @@
             "0",
             "1"
           ],
-          "port": "5000",
+          "port": "5001",
           "path": [
             "appointments"
           ]
         }
-      },
-      "response": []
+      }
     },
     {
       "name": "GetMedicalRecords",
@@ -66,7 +68,6 @@
         {
           "listen": "test",
           "script": {
-            "id": "880ca327-9a25-42d3-82e9-91cf044c4d74",
             "exec": [
               "pm.test(\"Status is 200\", () => {",
               "    pm.response.to.have.status(200);",
@@ -77,25 +78,27 @@
               "});",
               ""
             ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript"
           }
         }
       ],
-      "id": "e0e54d91-6a7f-4d46-a80e-f2f84645d1e1",
-      "protocolProfileBehavior": {
-        "disableBodyPruning": true
-      },
       "request": {
         "method": "GET",
-        "header": [],
         "body": {
           "mode": "raw",
           "raw": ""
         },
         "url": {
-          "raw": "http://127.0.0.1:5000/medical_records",
+          "raw": "http://127.0.0.1:5001/medical_records",
           "protocol": "http",
           "host": [
             "127",
@@ -103,13 +106,12 @@
             "0",
             "1"
           ],
-          "port": "5000",
+          "port": "5001",
           "path": [
             "medical_records"
           ]
         }
-      },
-      "response": []
+      }
     }
   ]
 }
