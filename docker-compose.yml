@@ -12,7 +12,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - 5005:5001
+      - 5001:5000
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-hospital_user}"]
       interval: 10s
@@ -72,6 +72,25 @@ services:
     restart: unless-stopped
     profiles:
       - production
+
+  datadog:
+    image: gcr.io/datadoghq/agent:7
+    container_name: datadog-agent
+    environment:
+      - DD_API_KEY=3aea2d16176896a9af883a75f3ad6b35
+      - DD_SITE=datadoghq.eu
+      - DD_LOGS_ENABLED=true
+      - DD_CONTAINER_EXCLUDE_LOGS=name:datadog-agent
+      - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
+      - DD_APM_ENABLED=true
+      - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
+      - DD_PROCESS_AGENT_ENABLED=true
+      - DD_CONTAINER_RUNTIME=docker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup:/host/sys/fs/cgroup:ro
+    restart: unless-stopped
 
 volumes:
   postgres_data:

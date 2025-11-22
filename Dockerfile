@@ -30,4 +30,4 @@ ENV FLASK_APP=src.app:create_app
 # We point gunicorn at the `wsgi` module which constructs the app via create_app().
 
 RUN pip install ddtrace
-CMD ["ddtrace-run", "gunicorn", "wsgi:application", "-b", "0.0.0.0:5000", "--workers", "2"]
+CMD ["ddtrace-run", "gunicorn", "wsgi:application", "-b", "0.0.0.0:5001", "--workers", "2"]
