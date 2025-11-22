@@ -29,5 +29,5 @@ ENV FLASK_APP=src.app:create_app
 # Run with gunicorn; using 2 workers as a reasonable default for a small container.
 # We point gunicorn at the `wsgi` module which constructs the app via create_app().
 
-RUN pip install ddtrace
-CMD ["ddtrace-run", "gunicorn", "wsgi:application", "-b", "0.0.0.0:5001", "--workers", "2"]
+RUN pip install --no-cache-dir ddtrace
+CMD ["ddtrace-run", "gunicorn", "wsgi:application", "-b", "0.0.0.0:5000", "--workers", "2"]
