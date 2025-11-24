@@ -75,7 +75,7 @@ jobs:
             ${{ env.IMAGE_NAME }}:latest
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
 
-      - name: Post-build: print image info
+      - name: print image info
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: |
           echo "Built and pushed images:"
