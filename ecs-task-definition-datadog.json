@@ -1,0 +1,153 @@
+{
+  "family": "HMS-task-definition",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "containerDefinitions": [
+    {
+      "name": "hms-app",
+      "image": "ghcr.io/TitoEt-ATU/hms:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 5000,
+          "hostPort": 5000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "FLASK_ENV",
+          "value": "production"
+        },
+        {
+          "name": "DD_SERVICE",
+          "value": "hms-app"
+        },
+        {
+          "name": "DD_ENV",
+          "value": "production"
+        },
+        {
+          "name": "DD_LOGS_INJECTION",
+          "value": "true"
+        },
+        {
+          "name": "DD_TRACE_SAMPLE_RATE",
+          "value": "1"
+        },
+        {
+          "name": "DD_AGENT_HOST",
+          "value": "localhost"
+        },
+        {
+          "name": "DD_AGENT_PORT",
+          "value": "8126"
+        },
+        {
+          "name": "DD_PROFILING_ENABLED",
+          "value": "true"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DD_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:eu-west-1:596797808861:secret:datadog/api-key:api-key::"
+        },
+        {
+          "name": "DATABASE_URL",
+          "valueFrom": "arn:aws:secretsmanager:eu-west-1:596797808861:secret:hms/database-url:database-url::"
+        },
+        {
+          "name": "SECRET_KEY",
+          "valueFrom": "arn:aws:secretsmanager:eu-west-1:596797808861:secret:hms/secret-key:secret-key::"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/HMS-service",
+          "awslogs-region": "eu-west-1",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-datetime-format": "%Y-%m-%d %H:%M:%S"
+        }
+      },
+      "dependsOn": [
+        {
+          "containerName": "datadog-agent",
+          "condition": "START"
+        }
+      ]
+    },
+    {
+      "name": "datadog-agent",
+      "image": "public.ecr.aws/datadog/agent:latest",
+      "essential": false,
+      "portMappings": [
+        {
+          "containerPort": 8126,
+          "hostPort": 8126,
+          "protocol": "tcp"
+        },
+        {
+          "containerPort": 8125,
+          "hostPort": 8125,
+          "protocol": "udp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "DD_LOGS_ENABLED",
+          "value": "true"
+        },
+        {
+          "name": "DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL",
+          "value": "true"
+        },
+        {
+          "name": "DD_APM_ENABLED",
+          "value": "true"
+        },
+        {
+          "name": "DD_APM_NON_LOCAL_TRAFFIC",
+          "value": "true"
+        },
+        {
+          "name": "DD_PROCESS_AGENT_ENABLED",
+          "value": "true"
+        },
+        {
+          "name": "ECS_AVAILABLE_PORT_8126",
+          "value": "true"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DD_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:eu-west-1:596797808861:secret:datadog/api-key:api-key::"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/datadog-agent",
+          "awslogs-region": "eu-west-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ],
+  "taskRoleArn": "arn:aws:iam::596797808861:role/ecsTaskRole",
+  "executionRoleArn": "arn:aws:iam::596797808861:role/ecsTaskExecutionRole",
+  "tags": [
+    {
+      "key": "service",
+      "value": "hms"
+    },
+    {
+      "key": "environment",
+      "value": "production"
+    }
+  ]
+}
