@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 env:
-  REPOSITORY_NAME: hms
+  IMAGE_NAME: ""
 
 jobs:
   test:
@@ -68,6 +68,10 @@ jobs:
       - name: Test with pytest
         run: |
           pytest -q
+      - name: Prepare IMAGE_NAME
+        run: |
+          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE_NAME=ghcr.io/${OWNER_LC}/hms" >> $GITHUB_ENV
 
   build-and-push:
     name: Build and Push Docker Image
