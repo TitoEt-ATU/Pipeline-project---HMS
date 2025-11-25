@@ -24,10 +24,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python 3.10
+      - name: Set up Python 3.11
         uses: actions/setup-python@v3
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
       - name: Install dependencies
         run: |
@@ -294,7 +294,7 @@ jobs:
             --task-definition ${{ steps.task_def.outputs.task_def_arn }} \
             --region ${{ env.ECS_REGION }}
           
-          echo "⏳ Waiting for service to stabilize after rollback..."
+          echo "Waiting for service to stabilize after rollback..."
           aws ecs wait services-stable \
             --cluster ${{ env.ECS_CLUSTER }} \
             --services ${{ env.ECS_SERVICE }} \

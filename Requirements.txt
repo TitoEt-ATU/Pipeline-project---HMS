@@ -14,7 +14,6 @@ SQLAlchemy==2.0.43
 typing_extensions==4.15.0
 Werkzeug==3.1.3
 psycopg2-binary==2.9.7
-# Datadog APM and Monitoring
 ddtrace>=1.10.0,<2.0.0
 datadog>=0.46.0,<1.0.0
 python-json-logger>=2.0.0
