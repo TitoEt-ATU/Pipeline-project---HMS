@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 env:
-  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/hms
+  REPOSITORY_NAME: hms
 
 jobs:
   test:
@@ -24,11 +24,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Normalize repository owner to lowercase for image name
+      - name: Lowercase image name (build)
+        id: image_lower_build
         run: |
-          OWNER="${{ github.repository_owner }}"
-          OWNER_LOWER=$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')
-          echo "IMAGE_NAME=ghcr.io/${OWNER_LOWER}/hms" >> $GITHUB_ENV
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE="ghcr.io/${OWNER}/hms"
+          echo "IMAGE_NAME=${IMAGE}" >> $GITHUB_ENV
+          echo "IMAGE_NAME=${IMAGE}"
+
+      - name: Show image tags (build)
+        run: |
+          echo "IMAGE: ${{ env.IMAGE_NAME }}"
+          echo "Tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}, ${{ env.IMAGE_NAME }}:latest"
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.11'
+
+      
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v3

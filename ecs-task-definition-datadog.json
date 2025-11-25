@@ -7,7 +7,7 @@
   "containerDefinitions": [
     {
       "name": "hms-app",
-      "image": "ghcr.io/TitoEt-ATU/hms:latest",
+      "image": "ghcr.io/titoet-atu/hms:latest",
       "essential": true,
       "portMappings": [
         {
