@@ -21,19 +21,39 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Set up Python 3.9
+      - name: Set up Python 3.10
         uses: actions/setup-python@v3
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
       - name: Install dependencies
+        working-directory: ${{ github.workspace }}
         run: |
+          set -euxo pipefail
+          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+          pwd
+          ls -la
+          ls -la $GITHUB_WORKSPACE || true
+          echo "-- SHOW requirements.txt --"
+          if [ -f requirements.txt ]; then
+            echo "requirements.txt FOUND at $(pwd)/requirements.txt"
+            sed -n '1,200p' requirements.txt
+          else
+            echo "ERROR: requirements.txt NOT FOUND at $(pwd)"
+            echo "Listing repo root:"
+            ls -la $GITHUB_WORKSPACE || true
+            exit 1
+          fi
           python -m pip install --upgrade pip setuptools wheel
           # Install requirements.txt FIRST (before flake8 and pytest)
-          pip install -r requirements.txt
+          pip install -r $GITHUB_WORKSPACE/requirements.txt || { echo "pip install failed"; ls -la; exit 1; }
           # Then install test dependencies
           pip install flake8 pytest
+          # List installed packages for debugging
+          python -m pip list
           # Verify key packages are installed
           python -c "import flask; import sqlalchemy; print('Flask and SQLAlchemy installed')"
       
@@ -58,6 +78,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
