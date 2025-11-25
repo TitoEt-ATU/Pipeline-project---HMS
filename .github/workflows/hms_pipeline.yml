@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 env:
-  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/hms
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner,, }}/hms
 
 jobs:
   test:
