@@ -33,7 +33,7 @@ jobs:
         run: |
           echo "Workspace path: $GITHUB_WORKSPACE"
           ls -al $GITHUB_WORKSPACE
-          pip install -r $GITHUB_WORKSPACE/requirements.txt
+          pip install -r $GITHUB_WORKSPACE/Requirements.txt
           pip install flake8 pytest
       
       - name: Add project root to PYTHONPATH
