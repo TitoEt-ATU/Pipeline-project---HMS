@@ -14,6 +14,15 @@
         "arn:aws:secretsmanager:eu-west-1:596797808861:secret:hms/secret-key*"
       ]
     },
+
+    {
+     "Effect": "Allow",
+     "Action": [
+       "ecs:DescribeServices"
+    ],
+     "Resource": "arn:aws:ecs:eu-west-1:596797808861:service/PipelineP-HMS/HMS-service-4ayod0w4"
+    },
+
     {
       "Sid": "AllowCloudWatchLogs",
       "Effect": "Allow",
