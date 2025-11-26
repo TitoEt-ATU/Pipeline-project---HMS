@@ -16,9 +16,16 @@
     },
 
     {
+     "Sid": "AllowECSServiceManagement",
      "Effect": "Allow",
      "Action": [
-       "ecs:DescribeServices"
+        "ecs:DescribeServices",
+        "ecs:DescribeTaskDefinition",
+        "ecs:UpdateService",
+        "ecs:RegisterTaskDefinition",
+        "ecs:ListTasks",
+        "ecs:DescribeTasks",
+        "ecs:ListClusters"
     ],
      "Resource": "arn:aws:ecs:eu-west-1:596797808861:service/PipelineP-HMS/HMS-service-4ayod0w4"
     },
