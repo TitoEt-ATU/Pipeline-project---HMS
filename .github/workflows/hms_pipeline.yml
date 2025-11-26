@@ -68,7 +68,6 @@ jobs:
       - name: Test with pytest
         run: |
           pytest -q
-            - name: Normalize image name to lowercase
   build-and-push:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
