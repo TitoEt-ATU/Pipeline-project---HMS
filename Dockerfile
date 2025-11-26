@@ -12,8 +12,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Install python deps. We add gunicorn to run the app in container.
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt gunicorn
+COPY Requirements.txt ./
+RUN pip install --no-cache-dir -r Requirements.txt gunicorn
 
 # Copy project files
 COPY . /app
