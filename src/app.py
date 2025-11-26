@@ -3,12 +3,20 @@ from datetime import datetime, timedelta
 from config.settings import Config
 from src.extensions import db, migrate
 from flask_sqlalchemy import SQLAlchemy
+from .datadog_config import init_datadog, configure_datadog_logging
 # Use package-relative imports so modules resolve when running as `src.app`
 from .models import Patient, Doctor, Appointment, MedicalRecord
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    # Initialize Datadog APM/logging if enabled
+    try:
+        init_datadog()
+    except Exception:
+        # Ignore datadog initialization failures in dev, but log to console
+        print("⚠️  Datadog initialization failed or is not configured")
 
     db.init_app(app)
     migrate.init_app(app, db)

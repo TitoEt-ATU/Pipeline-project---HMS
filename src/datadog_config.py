@@ -4,7 +4,7 @@ Enables APM (Application Performance Monitoring), logging, and metrics
 """
 
 import os
-from ddtrace import config, initialize
+from ddtrace import config, tracer, patch_all
 from ddtrace.profiling import profiler
 
 # Initialize Datadog tracing
@@ -24,11 +24,10 @@ def init_datadog():
     version = os.getenv('DATADOG_VERSION', 'unknown')
     
     try:
-        # Initialize Datadog APM
-        initialize(
-            enable_base_metrics=True,
-            analytics_enabled=True,
-        )
+        # Auto patch supported integrations
+        patch_all()
+        # Ensure tracer is enabled
+        tracer.enabled = True
         
         # Configure service info
         config.service = service
@@ -40,19 +39,26 @@ def init_datadog():
         config.flask['trace_abort_handler'] = True
         
         # Enable SQLAlchemy integration for database tracing
-        config.sqlalchemy['trace_rows_per_cursor'] = True
+        if hasattr(config, 'sqlalchemy'):
+            config.sqlalchemy['trace_rows_per_cursor'] = True
         
-        # Configure profiler
-        profiler.start(
-            service=service,
-            env=env,
-            version=version,
-            tags={
-                'service': service,
-                'env': env,
-                'version': version,
-            }
-        )
+        # Configure profiler (guarded; some ddtrace versions may not expose profiler.start)
+        try:
+            if hasattr(profiler, 'start'):
+                profiler.start(
+                    service=service,
+                    env=env,
+                    version=version,
+                    tags={
+                        'service': service,
+                        'env': env,
+                        'version': version,
+                    }
+                )
+            else:
+                print('⚠️  Datadog profiler API (profiler.start) is not available in this ddtrace version; skipping profiler start.')
+        except Exception as e:
+            print(f'⚠️  Datadog profiler failed to start: {e}')
         
         print(f"✅ Datadog APM initialized - Service: {service}, Env: {env}, Version: {version}")
         return True

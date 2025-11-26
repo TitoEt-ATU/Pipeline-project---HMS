@@ -11,8 +11,9 @@ services:
       POSTGRES_DB: ${DB_NAME:-hospital_management}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # Map host port 5432 to container 5432 (Postgres default)
     ports:
-      - 5001:5000
+      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-hospital_user}"]
       interval: 10s
