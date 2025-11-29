@@ -22,12 +22,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
-
-      
-
-      
-
+    
       - name: Lowercase image name (build)
         id: image_lower_build
         run: |
