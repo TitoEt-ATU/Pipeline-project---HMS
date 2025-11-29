@@ -36,10 +36,6 @@ jobs:
           echo "IMAGE: ${{ env.IMAGE_NAME }}"
           echo "Tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}, ${{ env.IMAGE_NAME }}:latest"
 
-      
-
-      
-
       - name: Set up Python 3.11
         uses: actions/setup-python@v3
         with:
