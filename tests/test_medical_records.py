@@ -15,11 +15,11 @@ from src.models import Patient, Doctor, MedicalRecord
 
 @pytest.fixture
 def app():
-    app = create_app()
-    # Use an in-memory database for tests to keep them isolated and fast
-    app.config['TESTING'] = True
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    app.config['WTF_CSRF_ENABLED'] = False
+    app = create_app({
+        'TESTING': True,
+        'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
+        'WTF_CSRF_ENABLED': False
+    })
 
     with app.app_context():
         db.create_all()

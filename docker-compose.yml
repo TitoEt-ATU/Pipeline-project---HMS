@@ -15,7 +15,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-hospital_user}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-hospital_user} -d ${DB_NAME:-hospital_management}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -49,13 +49,13 @@ services:
       DD_APPSEC_SCA_ENABLED: "true"
       
     ports:
-      - "5001:5000"
+      - "5001:5001"
     volumes:
       - ./src:/app/src
       - ./migrations:/app/migrations
     command: gunicorn wsgi:application -b 0.0.0.0:5001 --workers 4 --timeout 120
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5001/"]
+      test: ["CMD-SHELL", "curl -f http://localhost:5001/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

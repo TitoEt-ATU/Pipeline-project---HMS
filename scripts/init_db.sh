@@ -28,7 +28,8 @@ SUPERUSER=${POSTGRES_USER:-${DB_USER}}
 function wait_for_db() {
   echo "Waiting for Postgres to be ready..."
   local i=0
-  while ! docker exec "$DB_CONTAINER_NAME" pg_isready -U "$DB_USER" >/dev/null 2>&1; do
+  # Use the superuser to check if Postgres itself is ready by connecting to the postgres database
+  while ! docker exec "$DB_CONTAINER_NAME" pg_isready -U "$SUPERUSER" -d postgres >/dev/null 2>&1; do
     sleep 1
     i=$((i+1))
     if [ $i -gt 60 ]; then

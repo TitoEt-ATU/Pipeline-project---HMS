@@ -7,9 +7,13 @@ from .datadog_config import init_datadog, configure_datadog_logging
 # Use package-relative imports so modules resolve when running as `src.app`
 from .models import Patient, Doctor, Appointment, MedicalRecord
 
-def create_app():
+def create_app(test_config: dict = None):
     app = Flask(__name__)
+    # Load default configuration from object
     app.config.from_object(Config)
+    # Allow tests or deployment scripts to override config by passing a dict
+    if test_config:
+        app.config.update(test_config)
 
     # Initialize Datadog APM/logging if enabled
     try:

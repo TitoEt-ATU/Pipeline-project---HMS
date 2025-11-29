@@ -11,6 +11,7 @@
         {
           "listen": "test",
           "script": {
+            "id": "4a901dfe-4cd5-4494-8489-537f96e9d8da",
             "exec": [
               "pm.test(\"Status is 201\", () => {",
               "    pm.response.to.have.status(201);",
@@ -28,6 +29,7 @@
         {
           "listen": "prerequest",
           "script": {
+            "id": "edb366f7-6851-4726-a484-a2689f54139d",
             "exec": [
               ""
             ],
@@ -35,11 +37,12 @@
           }
         }
       ],
+      "id": "7817eb52-5d7c-488a-9ca8-e22d465dbc9b",
       "request": {
         "method": "POST",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"patient_id\": 12,\n  \"doctor_id\": 5,\n  \"appointment_time\": \"2025-02-10 14:00:00\",\n  \"reason\": \"Follow-up consultation\"\n}\n",
+          "raw": "",
           "options": {
             "raw": {
               "language": "json"
@@ -91,6 +94,7 @@
           }
         }
       ],
+      "id": "9cd20132-9aef-456e-8352-209964ce12e3",
       "request": {
         "method": "GET",
         "body": {

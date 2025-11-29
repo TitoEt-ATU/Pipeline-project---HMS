@@ -32,6 +32,15 @@ chmod +x scripts/run_dev.sh
 ./scripts/run_dev.sh
 ```
 
+Accessing the app
+------------------
+After starting the app (via docker-compose or ddtrace-run), the application is available on port 5001 by default:
+
+```bash
+# Open the home page
+curl http://localhost:5001/
+```
+
 Notes:
 - The application lives under `src/` and uses package relative imports; launching `python app.py` from the repository root will fail because there's no top-level `app.py`.
 - If you want reliable local tracing & profiling, ensure the Datadog agent is running and `DD_AGENT_HOST` is configured to point to it.
