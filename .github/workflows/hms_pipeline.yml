@@ -138,8 +138,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     env:
-      ECS_CLUSTER: PipelineP-HMS
-      ECS_SERVICE: HMS-service-4ayod0w4
+      ECS_CLUSTER: HMSCluster
+      ECS_SERVICE: HMS-task-definition-service-79so2vh9
       ECS_REGION: eu-west-1
       AWS_ACCOUNT_ID: 596797808861
 
